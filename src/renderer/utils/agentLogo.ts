@@ -20,8 +20,6 @@ import GooseLogo from '@/renderer/assets/logos/goose.svg';
 import IflowLogo from '@/renderer/assets/logos/iflow.svg';
 import KimiLogo from '@/renderer/assets/logos/kimi.svg';
 import MistralLogo from '@/renderer/assets/logos/mistral.svg';
-import NanobotLogo from '@/renderer/assets/logos/nanobot.svg';
-import OpenClawLogo from '@/renderer/assets/logos/openclaw.svg';
 import OpenCodeLogoDark from '@/renderer/assets/logos/opencode-dark.svg';
 import OpenCodeLogoLight from '@/renderer/assets/logos/opencode-light.svg';
 import QoderLogo from '@/renderer/assets/logos/qoder.png';
@@ -38,7 +36,6 @@ const AGENT_LOGO_MAP = {
   claude: ClaudeLogo,
   qwen: QwenLogo,
   iflow: IflowLogo,
-  codex: CodexLogo,
   codebuddy: CodeBuddyLogo,
   droid: DroidLogo,
   goose: GooseLogo,
@@ -46,10 +43,7 @@ const AGENT_LOGO_MAP = {
   kimi: KimiLogo,
   opencode: OpenCodeLogoLight,
   copilot: GitHubLogo,
-  openclaw: OpenClawLogo,
-  'openclaw-gateway': OpenClawLogo,
   vibe: MistralLogo,
-  nanobot: NanobotLogo,
   qoder: QoderLogo,
 } as const satisfies Record<string, string>;
 

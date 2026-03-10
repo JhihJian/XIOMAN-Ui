@@ -4,8 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { CodexToolCallUpdate, IMessageAcpToolCall, IMessageToolGroup, TMessage } from '@/common/chatLib';
+import type { IMessageAcpToolCall, IMessageToolGroup, TMessage } from '@/common/chatLib';
+import FileChangesPanel from '@/renderer/components/base/FileChangesPanel';
+import { useDiffPreviewHandlers } from '@/renderer/hooks/useDiffPreviewHandlers';
 import { iconColors } from '@/renderer/theme/colors';
+import { parseDiff } from '@/renderer/utils/diffUtils';
 import { Image } from '@arco-design/web-react';
 import { Down } from '@icon-park/react';
 import MessageAcpPermission from '@renderer/messages/acp/MessageAcpPermission';
@@ -17,9 +20,6 @@ import { useTranslation } from 'react-i18next';
 import { Virtuoso } from 'react-virtuoso';
 import { uuid } from '../utils/common';
 import HOC from '../utils/HOC';
-import MessageCodexToolCall from './codex/MessageCodexToolCall';
-import type { FileChangeInfo } from './codex/MessageFileChanges';
-import MessageFileChanges, { parseDiff } from './codex/MessageFileChanges';
 import { useMessageList } from './hooks';
 import MessagePlan from './MessagePlan';
 import MessageTips from './MessageTips';
@@ -29,8 +29,7 @@ import MessageToolGroupSummary from './MessageToolGroupSummary';
 import MessageText from './MessagetText';
 import type { WriteFileResult } from './types';
 import { useAutoScroll } from './useAutoScroll';
-
-type TurnDiffContent = Extract<CodexToolCallUpdate, { subtype: 'turn_diff' }>;
+import type { FileChangeInfo } from '@/renderer/utils/diffUtils';
 
 type IMessageVO =
   | TMessage
@@ -79,7 +78,8 @@ const MessageItem: React.FC<{ message: TMessage }> = React.memo(
         // Permission UI is now handled by ConversationChatConfirm component
         return null;
       case 'codex_tool_call':
-        return <MessageCodexToolCall message={message}></MessageCodexToolCall>;
+        // Legacy codex_tool_call messages are now handled the same as acp_tool_call
+        return <MessageAcpToolCall message={message as unknown as IMessageAcpToolCall}></MessageAcpToolCall>;
       case 'plan':
         return <MessagePlan message={message}></MessagePlan>;
       case 'available_commands':
@@ -91,11 +91,23 @@ const MessageItem: React.FC<{ message: TMessage }> = React.memo(
   (prev, next) => prev.message.id === next.message.id && prev.message.content === next.message.content && prev.message.position === next.message.position && prev.message.type === next.message.type
 );
 
+// File changes summary component for displaying grouped file diffs
+const FileChangesSummary: React.FC<{ diffs: FileChangeInfo[] }> = ({ diffs }) => {
+  const { handleFileClick, handleDiffClick } = useDiffPreviewHandlers({
+    diffText: diffs[0]?.diff || '',
+    displayName: diffs[0]?.fileName || '',
+    filePath: diffs[0]?.fullPath || '',
+    title: 'File Changes',
+  });
+
+  return <FileChangesPanel title='File Changes' files={diffs} onFileClick={handleFileClick} onDiffClick={handleDiffClick} defaultExpanded={true} />;
+};
+
 const MessageList: React.FC<{ className?: string }> = () => {
   const list = useMessageList();
   const { t } = useTranslation();
 
-  // Pre-process message list to group Codex turn_diff messages
+  // Pre-process message list to group file changes from tool_group messages
   const processedList = useMemo(() => {
     const result: Array<IMessageVO> = [];
     let diffsChanges: FileChangeInfo[] = [];
@@ -120,8 +132,8 @@ const MessageList: React.FC<{ className?: string }> = () => {
       const message = list[i];
       // Skip available_commands messages
       if (message.type === 'available_commands') continue;
-      if (message.type === 'codex_tool_call' && message.content.subtype === 'turn_diff') {
-        pushFileDffChanges(parseDiff((message.content as TurnDiffContent).data.unified_diff));
+      // Legacy codex_tool_call with turn_diff - skip turn_diff subtype, handled via acp_tool_call now
+      if (message.type === 'codex_tool_call' && (message.content as any).subtype === 'turn_diff') {
         continue;
       }
       if (message.type === 'tool_group') {
@@ -135,8 +147,8 @@ const MessageList: React.FC<{ className?: string }> = () => {
         pushToolList(message);
         continue;
       }
-      if (message.type === 'acp_tool_call') {
-        pushToolList(message);
+      if (message.type === 'acp_tool_call' || message.type === 'codex_tool_call') {
+        pushToolList(message as IMessageAcpToolCall);
         continue;
       }
       toolList = [];
@@ -162,7 +174,7 @@ const MessageList: React.FC<{ className?: string }> = () => {
     if ('type' in item && ['file_summary', 'tool_summary'].includes(item.type)) {
       return (
         <div key={item.id} className={'min-w-0 message-item px-8px m-t-10px max-w-full md:max-w-780px mx-auto ' + item.type}>
-          {item.type === 'file_summary' && <MessageFileChanges diffsChanges={item.diffs} />}
+          {item.type === 'file_summary' && <FileChangesSummary diffs={item.diffs} />}
           {item.type === 'tool_summary' && <MessageToolGroupSummary messages={item.messages}></MessageToolGroupSummary>}
         </div>
       );

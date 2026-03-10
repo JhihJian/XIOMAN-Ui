@@ -6,7 +6,6 @@
 
 import { ipcBridge } from '@/common';
 import { ASSISTANT_PRESETS } from '@/common/presets/assistantPresets';
-import { DEFAULT_CODEX_MODELS } from '@/common/codex/codexModels';
 import type { IProvider } from '@/common/storage';
 import { ConfigStorage } from '@/common/storage';
 import type { AcpBackend, AcpBackendConfig, AcpModelInfo, AvailableAgent, EffectiveAgentInfo, PresetAgentType } from '../types';
@@ -523,18 +522,7 @@ export const useGuidAgentSelection = ({ modelList, isGoogleAuth, localeKey }: Us
     const cached = acpCachedModels[backend];
     if (cached) return cached;
 
-    // Fallback: when no cached models exist for codex (e.g., first launch or stale cache),
-    // use the hardcoded default list so the Guid page shows a model selector immediately.
-    if (backend === 'codex' && DEFAULT_CODEX_MODELS.length > 0) {
-      return {
-        source: 'models' as const,
-        currentModelId: DEFAULT_CODEX_MODELS[0].id,
-        currentModelLabel: DEFAULT_CODEX_MODELS[0].label,
-        availableModels: DEFAULT_CODEX_MODELS.map((m) => ({ id: m.id, label: m.label })),
-        canSwitch: true,
-      } satisfies AcpModelInfo;
-    }
-
+    // No fallback models available - models will be fetched from the agent
     return null;
   }, [selectedAgentKey, acpCachedModels]);
 

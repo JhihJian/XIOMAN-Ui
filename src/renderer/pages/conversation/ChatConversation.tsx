@@ -21,9 +21,6 @@ import { emitter } from '../../utils/emitter';
 import AcpChat from './acp/AcpChat';
 import ChatLayout from './ChatLayout';
 import ChatSider from './ChatSider';
-import CodexChat from './codex/CodexChat';
-import NanobotChat from './nanobot/NanobotChat';
-import OpenClawChat from './openclaw/OpenClawChat';
 import AcpModelSelector from '@/renderer/components/AcpModelSelector';
 
 const _AssociatedConversation: React.FC<{ conversation_id: string }> = ({ conversation_id }) => {
@@ -99,18 +96,11 @@ const ChatConversation: React.FC<{
 
   const conversationNode = useMemo(() => {
     if (!conversation) return null;
-    switch (conversation.type) {
-      case 'acp':
-        return <AcpChat key={conversation.id} conversation_id={conversation.id} workspace={conversation.extra?.workspace} backend={conversation.extra?.backend || 'claude'} sessionMode={conversation.extra?.sessionMode}></AcpChat>;
-      case 'codex': // Legacy: new Codex conversations use ACP protocol. Kept for existing sessions.
-        return <CodexChat key={conversation.id} conversation_id={conversation.id} workspace={conversation.extra?.workspace} />;
-      case 'openclaw-gateway':
-        return <OpenClawChat key={conversation.id} conversation_id={conversation.id} workspace={conversation.extra?.workspace} />;
-      case 'nanobot':
-        return <NanobotChat key={conversation.id} conversation_id={conversation.id} workspace={conversation.extra?.workspace} />;
-      default:
-        return null;
+    // All conversation types now use ACP protocol
+    if (conversation.type === 'acp' || conversation.type === 'codex' || conversation.type === 'nanobot' || conversation.type === 'openclaw-gateway') {
+      return <AcpChat key={conversation.id} conversation_id={conversation.id} workspace={conversation.extra?.workspace} backend={conversation.extra?.backend || 'claude'} sessionMode={conversation.extra?.sessionMode}></AcpChat>;
     }
+    return null;
   }, [conversation]);
 
   // 使用统一的 Hook 获取预设助手信息（ACP/Codex 会话）
@@ -125,20 +115,16 @@ const ChatConversation: React.FC<{
     );
   }, [t]);
 
-  // For ACP/Codex conversations, use AcpModelSelector that can show/switch models.
+  // For ACP conversations, use AcpModelSelector that can show/switch models.
   const modelSelector = useMemo(() => {
     if (!conversation) return undefined;
-    if (conversation.type === 'acp') {
+    if (conversation.type === 'acp' || conversation.type === 'codex') {
       const extra = conversation.extra as { backend?: string; currentModelId?: string };
       return <AcpModelSelector conversationId={conversation.id} backend={extra.backend} initialModelId={extra.currentModelId} />;
-    }
-    if (conversation.type === 'codex') {
-      return <AcpModelSelector conversationId={conversation.id} />;
     }
     return undefined;
   }, [conversation]);
 
-  // 如果有预设助手信息,使用预设助手的 logo 和名称；加载中时不进入 fallback；否则使用 backend 的 logo
   // If preset assistant info exists, use preset logo/name; while loading, avoid fallback; otherwise use backend logo
   const chatLayoutProps = presetAssistantInfo
     ? {
@@ -149,7 +135,7 @@ const ChatConversation: React.FC<{
     : isLoadingPreset
       ? {} // Still loading custom agents — avoid showing backend logo prematurely
       : {
-          backend: conversation?.type === 'acp' ? conversation?.extra?.backend : conversation?.type === 'codex' ? 'codex' : conversation?.type === 'openclaw-gateway' ? 'openclaw-gateway' : conversation?.type === 'nanobot' ? 'nanobot' : undefined,
+          backend: conversation?.type === 'acp' ? conversation?.extra?.backend : conversation?.type === 'codex' ? 'codex' : undefined,
           agentName: (conversation?.extra as { agentName?: string })?.agentName,
         };
 

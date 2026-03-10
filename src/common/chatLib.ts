@@ -4,11 +4,89 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { CodexPermissionRequest } from '@/common/codex/types';
-import type { ExecCommandBeginData, ExecCommandEndData, ExecCommandOutputDeltaData, McpToolCallBeginData, McpToolCallEndData, PatchApplyBeginData, PatchApplyEndData, TurnDiffData, WebSearchBeginData, WebSearchEndData } from '@/common/codex/types/eventData';
 import type { AcpBackend, AcpPermissionRequest, PlanUpdate, ToolCallUpdate } from '@/types/acpTypes';
 import type { IResponseMessage } from './ipcBridge';
 import { uuid } from './utils';
+
+// ===== Legacy Codex types (for backward compatibility with existing data) =====
+// These types were previously imported from @/common/codex/types which was removed.
+// They are kept here for handling legacy codex_permission and codex_tool_call messages.
+
+/**
+ * Legacy Codex permission request type.
+ * @deprecated Use AcpPermissionRequest for new code
+ */
+export interface CodexPermissionRequest {
+  id: string;
+  callId: string;
+  session_id: string;
+  title: string;
+  message: string;
+  options: Array<{
+    id: string;
+    label: string;
+  }>;
+}
+
+// Legacy Codex event data types
+// These are used for CodexToolCallUpdate subtypes
+
+export interface ExecCommandBeginData {
+  command: string;
+  args?: string[];
+  cwd?: string;
+}
+
+export interface ExecCommandOutputDeltaData {
+  output: string;
+  stream?: 'stdout' | 'stderr';
+}
+
+export interface ExecCommandEndData {
+  exit_code: number;
+  output?: string;
+}
+
+export interface PatchApplyBeginData {
+  path: string;
+  diff?: string;
+}
+
+export interface PatchApplyEndData {
+  path: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface McpToolCallBeginData {
+  server_name: string;
+  tool_name: string;
+  arguments?: Record<string, unknown>;
+}
+
+export interface McpToolCallEndData {
+  server_name: string;
+  tool_name: string;
+  result?: unknown;
+  error?: string;
+}
+
+export interface WebSearchBeginData {
+  query: string;
+}
+
+export interface WebSearchEndData {
+  results?: Array<{
+    title: string;
+    url: string;
+    snippet?: string;
+  }>;
+  error?: string;
+}
+
+export interface TurnDiffData {
+  unified_diff: string;
+}
 
 /**
  * 安全的路径拼接函数，兼容Windows和Mac
