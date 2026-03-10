@@ -9,7 +9,7 @@ import type { ICreateConversationParams } from '@/common/ipcBridge';
 import type { ConversationSource, TChatConversation } from '@/common/storage';
 import { getDatabase } from '@process/database';
 import path from 'path';
-import { createAcpAgent, createCodexAgent, createNanobotAgent, createOpenClawAgent } from '../initAgent';
+import { createAcpAgent } from '../initAgent';
 import WorkerManage from '../WorkerManage';
 
 /**
@@ -53,14 +53,8 @@ export class ConversationService {
 
       if (type === 'acp') {
         conversation = await createAcpAgent(params);
-      } else if (type === 'codex') {
-        conversation = await createCodexAgent(params);
-      } else if (type === 'openclaw-gateway') {
-        conversation = await createOpenClawAgent(params);
-      } else if (type === 'nanobot') {
-        conversation = await createNanobotAgent(params);
       } else {
-        return { success: false, error: `Invalid conversation type: ${type}` };
+        return { success: false, error: `Invalid conversation type: ${type}. Only 'acp' is supported.` };
       }
 
       // Apply custom ID, name, source, and channelChatId
