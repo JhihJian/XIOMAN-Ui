@@ -70,9 +70,6 @@ export default defineConfig(({ mode }) => {
             // BaseAgentManager.resolveWorkerDir() handles the case where code
             // splitting places it in a chunks/ subdirectory.
             acp: resolve('src/worker/acp.ts'),
-            codex: resolve('src/worker/codex.ts'),
-            'openclaw-gateway': resolve('src/worker/openclaw-gateway.ts'),
-            nanobot: resolve('src/worker/nanobot.ts'),
           },
           onwarn(warning, warn) {
             if (warning.code === 'EVAL') return;
