@@ -346,14 +346,14 @@ export class ActionExecutor {
       if (!session || !session.conversationId) {
         const source = platform === 'lark' ? 'lark' : platform === 'dingtalk' ? 'dingtalk' : 'telegram';
 
-        // Read selected agent for this platform (defaults to Gemini)
+        // Read selected agent for this platform (defaults to Claude/ACP)
         let savedAgent: unknown = undefined;
         try {
           savedAgent = await (platform === 'lark' ? ProcessConfig.get('assistant.lark.agent') : platform === 'dingtalk' ? ProcessConfig.get('assistant.dingtalk.agent') : ProcessConfig.get('assistant.telegram.agent'));
         } catch {
           // ignore
         }
-        const backend = (savedAgent && typeof savedAgent === 'object' && typeof (savedAgent as any).backend === 'string' ? (savedAgent as any).backend : 'gemini') as string;
+        const backend = (savedAgent && typeof savedAgent === 'object' && typeof (savedAgent as any).backend === 'string' ? (savedAgent as any).backend : 'claude') as string;
         const customAgentId = savedAgent && typeof savedAgent === 'object' ? ((savedAgent as any).customAgentId as string | undefined) : undefined;
         const agentName = savedAgent && typeof savedAgent === 'object' ? ((savedAgent as any).name as string | undefined) : undefined;
 
@@ -380,34 +380,27 @@ export class ActionExecutor {
                 channelChatId: chatId,
                 extra: {},
               })
-            : backend === 'gemini'
-              ? await ConversationService.createGeminiConversation({
+            : backend === 'openclaw-gateway'
+              ? await ConversationService.createConversation({
+                  type: 'openclaw-gateway',
                   model,
                   name: conversationName,
                   source,
                   channelChatId: chatId,
+                  extra: {},
                 })
-              : backend === 'openclaw-gateway'
-                ? await ConversationService.createConversation({
-                    type: 'openclaw-gateway',
-                    model,
-                    name: conversationName,
-                    source,
-                    channelChatId: chatId,
-                    extra: {},
-                  })
-                : await ConversationService.createConversation({
-                    type: 'acp',
-                    model,
-                    name: conversationName,
-                    source,
-                    channelChatId: chatId,
-                    extra: {
-                      backend: backend as AcpBackend,
-                      customAgentId,
-                      agentName,
-                    },
-                  });
+              : await ConversationService.createConversation({
+                  type: 'acp',
+                  model,
+                  name: conversationName,
+                  source,
+                  channelChatId: chatId,
+                  extra: {
+                    backend: backend as AcpBackend,
+                    customAgentId,
+                    agentName,
+                  },
+                });
 
         if (result.success && result.conversation) {
           const { convType: agentType } = resolveChannelConvType(backend);

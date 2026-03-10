@@ -9,7 +9,6 @@ import { ipcBridge } from '@/common';
 import useModeModeList from '../../../hooks/useModeModeList';
 
 // Provider Logo imports
-import GeminiLogo from '@/renderer/assets/logos/gemini.svg';
 import OpenAILogo from '@/renderer/assets/logos/openai.svg';
 import AnthropicLogo from '@/renderer/assets/logos/anthropic.svg';
 import BedrockLogo from '@/renderer/assets/logos/bedrock.svg';
@@ -36,8 +35,6 @@ import NewApiLogo from '@/renderer/assets/logos/newapi.svg';
  * Provider config (includes name, URL, logo)
  */
 const PROVIDER_CONFIGS = [
-  { name: 'Gemini', url: '', logo: GeminiLogo, platform: 'gemini' },
-  { name: 'Gemini (Vertex AI)', url: '', logo: GeminiLogo, platform: 'gemini-vertex-ai' },
   { name: 'New API', url: '', logo: NewApiLogo, platform: 'new-api' },
   { name: 'OpenAI', url: 'https://api.openai.com/v1', logo: OpenAILogo },
   { name: 'Anthropic', url: 'https://api.anthropic.com/v1', logo: AnthropicLogo },
@@ -69,7 +66,7 @@ const PROVIDER_CONFIGS = [
 const getProviderLogo = (name?: string, baseUrl?: string, platform?: string): string | null => {
   if (!name && !baseUrl && !platform) return null;
 
-  // 优先按 platform 匹配（Gemini 系列）
+  // 优先按 platform 匹配 / Match by platform first
   if (platform) {
     const byPlatform = PROVIDER_CONFIGS.find((p) => p.platform === platform);
     if (byPlatform) return byPlatform.logo;
@@ -120,7 +117,7 @@ const EditModeModal = ModalHOC<{ data?: IProvider; onChange(data: IProvider): vo
 
   // For Bedrock, don't pass bedrockConfig to avoid auto-refresh on input changes
   // We'll build it dynamically in onFocus
-  const modelListState = useModeModeList(data?.platform || 'gemini', data?.baseUrl, data?.apiKey, true, undefined);
+  const modelListState = useModeModeList(data?.platform || 'custom', data?.baseUrl, data?.apiKey, true, undefined);
 
   useEffect(() => {
     if (data) {
@@ -192,8 +189,8 @@ const EditModeModal = ModalHOC<{ data?: IProvider; onChange(data: IProvider): vo
             <Input placeholder={t('settings.modelProvider')} />
           </Form.Item>
 
-          {/* Base URL - 仅 Gemini 平台显示（用于自定义代理）/ Base URL - only for Gemini platform (for custom proxy) */}
-          <Form.Item hidden={isBedrock} label={t('settings.baseUrl')} required={data?.platform !== 'gemini' && data?.platform !== 'gemini-vertex-ai' && !isBedrock} rules={[{ required: data?.platform !== 'gemini' && data?.platform !== 'gemini-vertex-ai' && !isBedrock }]} field={'baseUrl'} disabled>
+          {/* Base URL - 显示用于自定义配置 / Base URL - shown for custom configurations */}
+          <Form.Item hidden={isBedrock} label={t('settings.baseUrl')} required={!isBedrock} rules={[{ required: !isBedrock }]} field={'baseUrl'} disabled>
             <Input></Input>
           </Form.Item>
 

@@ -70,7 +70,7 @@ export class SessionManager {
    * Create a new session for a user
    * This will clear any existing session for the same user+chat combo
    */
-  createSession(user: IChannelUser, agentType: ChannelAgentType = 'gemini', workspace?: string, chatId?: string): IChannelSession {
+  createSession(user: IChannelUser, agentType: ChannelAgentType = 'acp', workspace?: string, chatId?: string): IChannelSession {
     // Generate a new conversationId
     return this.createSessionWithConversation(user, uuid(), agentType, workspace, chatId);
   }

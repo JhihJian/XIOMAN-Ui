@@ -12,7 +12,6 @@ import OpenClawAgentManager from './task/OpenClawAgentManager';
 // import type { AcpAgentTask } from './task/AcpAgentTask';
 import { ProcessChat } from './initStorage';
 import type AgentBaseTask from './task/BaseAgentManager';
-import { GeminiAgentManager } from './task/GeminiAgentManager';
 import { getDatabase } from './database/export';
 
 const taskList: {
@@ -45,31 +44,6 @@ const buildConversation = (conversation: TChatConversation, options?: BuildConve
   }
 
   switch (conversation.type) {
-    case 'gemini': {
-      const task = new GeminiAgentManager(
-        {
-          workspace: conversation.extra.workspace,
-          conversation_id: conversation.id,
-          webSearchEngine: conversation.extra.webSearchEngine,
-          // 系统规则 / System rules
-          presetRules: conversation.extra.presetRules,
-          // 向后兼容 / Backward compatible
-          contextContent: conversation.extra.contextContent,
-          // 启用的 skills 列表（通过 SkillManager 加载）/ Enabled skills list (loaded via SkillManager)
-          enabledSkills: conversation.extra.enabledSkills,
-          // Runtime options / 运行时选项
-          yoloMode: options?.yoloMode,
-          // Persisted session mode for resume / 持久化的会话模式用于恢复
-          sessionMode: conversation.extra.sessionMode,
-        },
-        conversation.model
-      );
-      // Only cache if not skipping cache
-      if (!options?.skipCache) {
-        taskList.push({ id: conversation.id, task });
-      }
-      return task;
-    }
     case 'acp': {
       const task = new AcpAgentManager({
         ...conversation.extra,

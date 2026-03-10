@@ -11,7 +11,6 @@ import { CodexConnection } from '@/agent/codex/connection/CodexConnection';
 import WorkerManage from '@/process/WorkerManage';
 import AcpAgentManager from '@/process/task/AcpAgentManager';
 import CodexAgentManager from '@/process/task/CodexAgentManager';
-import { GeminiAgentManager } from '@/process/task/GeminiAgentManager';
 import { mcpService } from '@/process/services/mcpServices/McpService';
 import { mainLog, mainWarn } from '@/process/utils/mainLogger';
 import { ipcBridge } from '../../common';
@@ -192,12 +191,12 @@ export function initAcpConversationBridge(): void {
     }
   });
 
-  // Get current session mode for ACP/Gemini agents
-  // 获取 ACP/Gemini 代理的当前会话模式
+  // Get current session mode for ACP agents
+  // 获取 ACP 代理的当前会话模式
   ipcBridge.acpConversation.getMode.provider(async ({ conversationId }) => {
     try {
       const task = await WorkerManage.getTaskByIdRollbackBuild(conversationId);
-      if (!task || !(task instanceof AcpAgentManager || task instanceof GeminiAgentManager || task instanceof CodexAgentManager)) {
+      if (!task || !(task instanceof AcpAgentManager || task instanceof CodexAgentManager)) {
         return { success: true, data: { mode: 'default', initialized: false } };
       }
       return { success: true, data: task.getMode() };
@@ -278,15 +277,15 @@ export function initAcpConversationBridge(): void {
     }
   });
 
-  // Set session mode for ACP/Gemini agents (claude, qwen, gemini, etc.)
-  // 设置 ACP/Gemini 代理的会话模式（claude、qwen、gemini 等）
+  // Set session mode for ACP agents (claude, qwen, etc.)
+  // 设置 ACP 代理的会话模式（claude、qwen 等）
   ipcBridge.acpConversation.setMode.provider(async ({ conversationId, mode }) => {
     try {
       const task = await WorkerManage.getTaskByIdRollbackBuild(conversationId);
       if (!task) {
         return { success: false, msg: 'Conversation not found' };
       }
-      if (!(task instanceof AcpAgentManager || task instanceof GeminiAgentManager || task instanceof CodexAgentManager)) {
+      if (!(task instanceof AcpAgentManager || task instanceof CodexAgentManager)) {
         return { success: false, msg: 'Mode switching not supported for this agent type' };
       }
       return await task.setMode(mode);

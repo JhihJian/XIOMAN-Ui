@@ -12,7 +12,7 @@ import useProtocolDetection from '../../../hooks/useProtocolDetection';
 import AionModal from '@/renderer/components/base/AionModal';
 import ApiKeyEditorModal from './ApiKeyEditorModal';
 import ProtocolDetectionStatus from './ProtocolDetectionStatus';
-import { MODEL_PLATFORMS, NEW_API_PROTOCOL_OPTIONS, detectNewApiProtocol, getPlatformByValue, isCustomOption, isGeminiPlatform, isNewApiPlatform, type PlatformConfig } from '@/renderer/config/modelPlatforms';
+import { MODEL_PLATFORMS, NEW_API_PROTOCOL_OPTIONS, detectNewApiProtocol, getPlatformByValue, isCustomOption, isNewApiPlatform, type PlatformConfig } from '@/renderer/config/modelPlatforms';
 import type { DeepLinkAddProviderDetail } from '@/renderer/hooks/useDeepLink';
 
 /**
@@ -67,11 +67,10 @@ const AddPlatformModal = ModalHOC<{
   // 获取当前选中的平台配置 / Get current selected platform config
   const selectedPlatform = useMemo(() => getPlatformByValue(platformValue), [platformValue]);
 
-  const platform = selectedPlatform?.platform ?? 'gemini';
+  const platform = selectedPlatform?.platform ?? 'custom';
   // 判断是否为"自定义"选项（没有预设 baseUrl） / Check if "Custom" option (no preset baseUrl)
   const isCustom = isCustomOption(platformValue);
   const isBedrock = platform === 'bedrock';
-  const isGemini = isGeminiPlatform(platform);
   const isNewApi = isNewApiPlatform(platform);
 
   // new-api 每模型协议选择状态 / new-api per-model protocol selection state
@@ -149,16 +148,10 @@ const AddPlatformModal = ModalHOC<{
         if (deepLinkData.baseUrl) form.setFieldValue('baseUrl', deepLinkData.baseUrl);
         if (deepLinkData.apiKey) form.setFieldValue('apiKey', deepLinkData.apiKey);
       } else {
-        form.setFieldValue('platform', 'gemini');
+        form.setFieldValue('platform', 'custom');
       }
     }
   }, [modalProps.visible, deepLinkData]);
-
-  useEffect(() => {
-    if (platform?.includes('gemini')) {
-      void modelListState.mutate();
-    }
-  }, [platform]);
 
   // 处理自动修复的 base_url / Handle auto-fixed base_url
   useEffect(() => {
@@ -221,7 +214,7 @@ const AddPlatformModal = ModalHOC<{
       <div className='flex flex-col gap-16px py-20px'>
         <Form form={form} layout='vertical' className='space-y-0'>
           {/* 模型平台选择（第一层）/ Model Platform Selection (first level) */}
-          <Form.Item initialValue='gemini' label={t('settings.modelPlatform')} field={'platform'} required rules={[{ required: true }]}>
+          <Form.Item initialValue='custom' label={t('settings.modelPlatform')} field={'platform'} required rules={[{ required: true }]}>
             <Select
               showSearch
               filterOption={(inputValue, option) => {
@@ -250,8 +243,8 @@ const AddPlatformModal = ModalHOC<{
             </Select>
           </Form.Item>
 
-          {/* Base URL - 自定义选项、标准 Gemini 和 New API 显示 / Base URL - for Custom, standard Gemini and New API */}
-          <Form.Item hidden={isBedrock || (!isCustom && !isNewApi && platformValue !== 'gemini')} label={t('settings.baseUrl')} field={'baseUrl'} required={isCustom || isNewApi} rules={[{ required: isCustom || isNewApi }]}>
+          {/* Base URL - 自定义选项和 New API 显示 / Base URL - for Custom and New API */}
+          <Form.Item hidden={isBedrock || (!isCustom && !isNewApi)} label={t('settings.baseUrl')} field={'baseUrl'} required={isCustom || isNewApi} rules={[{ required: isCustom || isNewApi }]}>
             <Input
               placeholder={isNewApi ? 'https://your-newapi-instance.com' : selectedPlatform?.baseUrl || ''}
               onBlur={() => {
@@ -387,8 +380,8 @@ const AddPlatformModal = ModalHOC<{
                       }
                       return;
                     }
-                    // For Gemini, no apiKey check needed
-                    if (!isGemini && !apiKey) {
+                    // API key is required for all platforms / 所有平台都需要 API Key
+                    if (!apiKey) {
                       message.warning(t('settings.pleaseEnterApiKey'));
                       return;
                     }

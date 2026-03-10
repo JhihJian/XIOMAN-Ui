@@ -22,18 +22,6 @@ export const ConfigStorage = storage.buildStorage<IConfigStorageRefer>('agent.co
 export const EnvStorage = storage.buildStorage<IEnvStorageRefer>('agent.env');
 
 export interface IConfigStorageRefer {
-  'gemini.config': {
-    authType: string;
-    proxy: string;
-    GOOGLE_GEMINI_BASE_URL?: string;
-    /** @deprecated Use accountProjects instead. Kept for backward compatibility migration. */
-    GOOGLE_CLOUD_PROJECT?: string;
-    /** 按 Google 账号存储的 GCP 项目 ID / GCP project IDs stored per Google account */
-    accountProjects?: Record<string, string>;
-    yoloMode?: boolean;
-    /** Preferred session mode for new conversations / 新会话的默认模式 */
-    preferredMode?: string;
-  };
   'codex.config'?: {
     cliPath?: string;
     yoloMode?: boolean;
@@ -63,7 +51,6 @@ export interface IConfigStorageRefer {
   customCss: string; // 自定义 CSS 样式
   'css.themes': ICssTheme[]; // 自定义 CSS 主题列表 / Custom CSS themes list
   'css.activeThemeId': string; // 当前激活的主题 ID / Currently active theme ID
-  'gemini.defaultModel': string | { id: string; useModel: string };
   'tools.imageGenerationModel': TProviderWithModel & {
     switch: boolean;
   };
@@ -152,31 +139,6 @@ export interface TokenUsageData {
 }
 
 export type TChatConversation =
-  | IChatConversation<
-      'gemini',
-      {
-        workspace: string;
-        customWorkspace?: boolean; // true 用户指定工作目录 false 系统默认工作目录
-        webSearchEngine?: 'google' | 'default'; // 搜索引擎配置
-        lastTokenUsage?: TokenUsageData; // 上次的 token 使用统计
-        contextFileName?: string;
-        contextContent?: string;
-        // 系统规则支持 / System rules support
-        presetRules?: string; // 系统规则，在初始化时注入 / System rules, injected at initialization
-        /** 启用的 skills 列表，用于过滤 SkillManager 加载的 skills / Enabled skills list for filtering SkillManager skills */
-        enabledSkills?: string[];
-        /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
-        presetAssistantId?: string;
-        /** 是否置顶会话 / Whether this conversation is pinned */
-        pinned?: boolean;
-        /** 置顶时间戳（毫秒）/ Pin timestamp in milliseconds */
-        pinnedAt?: number;
-        /** Persisted session mode for resume support / 持久化的会话模式，用于恢复 */
-        sessionMode?: string;
-        /** Explicit marker for temporary health-check conversations */
-        isHealthCheck?: boolean;
-      }
-    >
   | Omit<
       IChatConversation<
         'acp',

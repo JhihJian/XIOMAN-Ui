@@ -8,8 +8,7 @@ import type { IChannelPairingRequest, IChannelPluginStatus, IChannelUser } from 
 import { acpConversation, channel } from '@/common/ipcBridge';
 import { ConfigStorage } from '@/common/storage';
 import { openExternalUrl } from '@/renderer/utils/platform';
-import GeminiModelSelector from '@/renderer/pages/conversation/gemini/GeminiModelSelector';
-import type { GeminiModelSelection } from '@/renderer/pages/conversation/gemini/useGeminiModelSelection';
+import ChannelModelSelector, { type ChannelModelSelection } from '@/renderer/components/ChannelModelSelector';
 import type { AcpBackendAll } from '@/types/acpTypes';
 import { Button, Dropdown, Empty, Input, Menu, Message, Spin, Tooltip } from '@arco-design/web-react';
 import { CheckOne, CloseOne, Copy, Delete, Down, Refresh } from '@icon-park/react';
@@ -53,7 +52,7 @@ const SectionHeader: React.FC<{ title: string; action?: React.ReactNode }> = ({ 
 
 interface LarkConfigFormProps {
   pluginStatus: IChannelPluginStatus | null;
-  modelSelection: GeminiModelSelection;
+  modelSelection: ChannelModelSelection;
   onStatusChange: (status: IChannelPluginStatus | null) => void;
 }
 
@@ -79,7 +78,7 @@ const LarkConfigForm: React.FC<LarkConfigFormProps> = ({ pluginStatus, modelSele
 
   // Agent selection (used for Lark conversations)
   const [availableAgents, setAvailableAgents] = useState<Array<{ backend: AcpBackendAll; name: string; customAgentId?: string; isPreset?: boolean }>>([]);
-  const [selectedAgent, setSelectedAgent] = useState<{ backend: AcpBackendAll; name?: string; customAgentId?: string }>({ backend: 'gemini' });
+  const [selectedAgent, setSelectedAgent] = useState<{ backend: AcpBackendAll; name?: string; customAgentId?: string }>({ backend: 'claude' });
 
   // Load pending pairings
   const loadPendingPairings = useCallback(async () => {
@@ -325,8 +324,7 @@ const LarkConfigForm: React.FC<LarkConfigFormProps> = ({ pluginStatus, modelSele
   };
 
   const hasExistingUsers = authorizedUsers.length > 0;
-  const isGeminiAgent = selectedAgent.backend === 'gemini';
-  const agentOptions: Array<{ backend: AcpBackendAll; name: string; customAgentId?: string }> = availableAgents.length > 0 ? availableAgents : [{ backend: 'gemini', name: 'Gemini CLI' }];
+  const agentOptions: Array<{ backend: AcpBackendAll; name: string; customAgentId?: string }> = availableAgents.length > 0 ? availableAgents : [{ backend: 'claude', name: 'Claude CLI' }];
 
   return (
     <div className='flex flex-col gap-24px'>
@@ -567,7 +565,7 @@ const LarkConfigForm: React.FC<LarkConfigFormProps> = ({ pluginStatus, modelSele
 
       {/* Default Model Selection */}
       <PreferenceRow label={t('settings.assistant.defaultModel', '对话模型')} description={t('settings.lark.defaultModelDesc', '用于Agent对话时调用')}>
-        <GeminiModelSelector selection={isGeminiAgent ? modelSelection : undefined} disabled={!isGeminiAgent} label={!isGeminiAgent ? t('settings.assistant.autoFollowCliModel', '自动跟随CLI运行时的模型') : undefined} variant='settings' />
+        <ChannelModelSelector selection={modelSelection} variant='settings' />
       </PreferenceRow>
 
       {/* Connection Status - show when bot is enabled */}

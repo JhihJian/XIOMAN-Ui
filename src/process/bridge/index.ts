@@ -18,8 +18,6 @@ import { initDialogBridge } from './dialogBridge';
 import { initDocumentBridge } from './documentBridge';
 import { initFileWatchBridge } from './fileWatchBridge';
 import { initFsBridge } from './fsBridge';
-import { initGeminiBridge } from './geminiBridge';
-import { initGeminiConversationBridge } from './geminiConversationBridge';
 import { initMcpBridge } from './mcpBridge';
 import { initModelBridge } from './modelBridge';
 import { initPreviewHistoryBridge } from './previewHistoryBridge';
@@ -39,9 +37,6 @@ export function initAllBridges(): void {
   initFileWatchBridge();
   initConversationBridge();
   initApplicationBridge();
-  initGeminiConversationBridge();
-  // 额外的 Gemini 辅助桥（订阅检测等）需要在对话桥初始化后可用 / extra helpers after core bridges
-  initGeminiBridge();
   initBedrockBridge();
   initAcpConversationBridge();
   initCodexConversationBridge();
@@ -72,7 +67,7 @@ export async function initializeAcpDetector(): Promise<void> {
 
 // 导出初始化函数供单独使用
 
-export { initAcpConversationBridge, initApplicationBridge, initAuthBridge, initBedrockBridge, initChannelBridge, initCodexConversationBridge, initConversationBridge, initCronBridge, initDatabaseBridge, initDialogBridge, initDocumentBridge, initFsBridge, initGeminiBridge, initGeminiConversationBridge, initMcpBridge, initModelBridge, initPreviewHistoryBridge, initShellBridge, initSystemSettingsBridge, initUpdateBridge, initWebuiBridge, initWindowControlsBridge };
+export { initAcpConversationBridge, initApplicationBridge, initAuthBridge, initBedrockBridge, initChannelBridge, initCodexConversationBridge, initConversationBridge, initCronBridge, initDatabaseBridge, initDialogBridge, initDocumentBridge, initFsBridge, initMcpBridge, initModelBridge, initPreviewHistoryBridge, initShellBridge, initSystemSettingsBridge, initUpdateBridge, initWebuiBridge, initWindowControlsBridge };
 
 // 导出窗口控制相关工具函数
 export { registerWindowMaximizeListeners } from './windowControlsBridge';

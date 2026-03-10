@@ -13,7 +13,6 @@
  */
 
 // Provider Logo imports
-import GeminiLogo from '@/renderer/assets/logos/gemini.svg';
 import OpenAILogo from '@/renderer/assets/logos/openai.svg';
 import AnthropicLogo from '@/renderer/assets/logos/anthropic.svg';
 import BedrockLogo from '@/renderer/assets/logos/bedrock.svg';
@@ -40,7 +39,7 @@ import NewApiLogo from '@/renderer/assets/logos/newapi.svg';
  * 平台类型
  * Platform type
  */
-export type PlatformType = 'gemini' | 'gemini-vertex-ai' | 'anthropic' | 'custom' | 'new-api' | 'bedrock';
+export type PlatformType = 'anthropic' | 'custom' | 'new-api' | 'bedrock';
 
 /**
  * 模型平台配置接口
@@ -66,10 +65,9 @@ export interface PlatformConfig {
  * Model Platform options list
  *
  * 顺序：
- * 1. Gemini (官方)
- * 2. Gemini Vertex AI
- * 3. 自定义（需要用户输入 base url）
- * 4+ 预设供应商
+ * 1. 自定义（需要用户输入 base url）
+ * 2. New API 多模型网关
+ * 3+ 预设供应商
  */
 export const MODEL_PLATFORMS: PlatformConfig[] = [
   // 自定义选项（需要用户输入 base url）/ Custom option (requires user to input base url)
@@ -77,10 +75,6 @@ export const MODEL_PLATFORMS: PlatformConfig[] = [
 
   // New API 多模型网关 / New API multi-model gateway
   { name: 'New API', value: 'new-api', logo: NewApiLogo, platform: 'new-api', i18nKey: 'settings.platformNewApi' },
-
-  // 官方 Gemini 平台
-  { name: 'Gemini', value: 'gemini', logo: GeminiLogo, platform: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com' },
-  { name: 'Gemini (Vertex AI)', value: 'gemini-vertex-ai', logo: GeminiLogo, platform: 'gemini-vertex-ai' },
 
   // 预设供应商（按字母顺序排列）
   { name: 'OpenAI', value: 'OpenAI', logo: OpenAILogo, platform: 'custom', baseUrl: 'https://api.openai.com/v1' },
@@ -146,22 +140,6 @@ export const getPlatformByValue = (value: string): PlatformConfig | undefined =>
  */
 export const getPresetProviders = (): PlatformConfig[] => {
   return MODEL_PLATFORMS.filter((p) => p.baseUrl);
-};
-
-/**
- * 获取官方 Gemini 平台
- * Get official Gemini platforms
- */
-export const getGeminiPlatforms = (): PlatformConfig[] => {
-  return MODEL_PLATFORMS.filter((p) => p.platform === 'gemini' || p.platform === 'gemini-vertex-ai');
-};
-
-/**
- * 检查平台是否为 Gemini 类型
- * Check if platform is Gemini type
- */
-export const isGeminiPlatform = (platform: PlatformType): boolean => {
-  return platform === 'gemini' || platform === 'gemini-vertex-ai';
 };
 
 /**

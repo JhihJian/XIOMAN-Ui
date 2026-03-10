@@ -19,7 +19,6 @@ import { createAgentSelectionCard as createDingTalkAgentSelectionCard, createFea
 import type { ChannelAgentType, PluginType } from '../types';
 import type { ActionHandler, IRegisteredAction } from './types';
 import { SystemActionNames, createErrorResponse, createSuccessResponse } from './types';
-import { GOOGLE_AUTH_PROVIDER_ID } from '@/common/constants';
 import type { AcpBackend } from '@/types/acpTypes';
 
 /**
@@ -44,21 +43,9 @@ export async function getChannelDefaultModel(platform: PluginType): Promise<TPro
     // Try to get saved model selection
     const savedModel = platform === 'lark' ? await ProcessConfig.get('assistant.lark.defaultModel') : platform === 'dingtalk' ? await ProcessConfig.get('assistant.dingtalk.defaultModel') : await ProcessConfig.get('assistant.telegram.defaultModel');
     if (savedModel?.id && savedModel?.useModel) {
-      // Google Auth is frontend-only (OAuth browser flow), not usable in channels.
-      // Fall through to find a provider with a valid API key instead.
-      if (savedModel.id === GOOGLE_AUTH_PROVIDER_ID) {
-        console.warn(`[SystemActions] Google Auth is not supported in channel mode (${platform}), falling back to API key provider`);
-        // Try to find any Gemini provider with API key for the same model
-        const fallback = providerList.find((p) => p.platform === 'gemini' && p.apiKey && p.model?.includes(savedModel.useModel));
-        if (fallback) {
-          return { ...fallback, useModel: savedModel.useModel } as TProviderWithModel;
-        }
-        // Otherwise fall through to general fallback below
-      } else {
-        // For regular (API-key-based) providers, look up full config
-        const result = findProviderWithApiKey(savedModel.id, savedModel.useModel);
-        if (result) return result;
-      }
+      // For regular (API-key-based) providers, look up full config
+      const result = findProviderWithApiKey(savedModel.id, savedModel.useModel);
+      if (result) return result;
     }
 
     // Fallback: try to get any Gemini provider with a valid API key
@@ -138,14 +125,14 @@ export const handleSessionNew: ActionHandler = async (context) => {
   const platform = context.platform;
   const source = platform === 'lark' ? 'lark' : platform === 'dingtalk' ? 'dingtalk' : 'telegram';
 
-  // Selected agent (defaults to Gemini)
+  // Selected agent (defaults to ACP/Claude)
   let savedAgent: unknown = undefined;
   try {
     savedAgent = await (platform === 'lark' ? ProcessConfig.get('assistant.lark.agent') : platform === 'dingtalk' ? ProcessConfig.get('assistant.dingtalk.agent') : ProcessConfig.get('assistant.telegram.agent'));
   } catch {
     // ignore
   }
-  const backend = (savedAgent && typeof savedAgent === 'object' && typeof (savedAgent as any).backend === 'string' ? (savedAgent as any).backend : 'gemini') as string;
+  const backend = (savedAgent && typeof savedAgent === 'object' && typeof (savedAgent as any).backend === 'string' ? (savedAgent as any).backend : 'claude') as string;
   const customAgentId = savedAgent && typeof savedAgent === 'object' ? ((savedAgent as any).customAgentId as string | undefined) : undefined;
   const agentName = savedAgent && typeof savedAgent === 'object' ? ((savedAgent as any).name as string | undefined) : undefined;
 
@@ -166,34 +153,27 @@ export const handleSessionNew: ActionHandler = async (context) => {
           channelChatId,
           extra: {},
         })
-      : backend === 'gemini'
-        ? await ConversationService.createGeminiConversation({
+      : backend === 'openclaw-gateway'
+        ? await ConversationService.createConversation({
+            type: 'openclaw-gateway',
             model,
             source,
             name,
             channelChatId,
+            extra: {},
           })
-        : backend === 'openclaw-gateway'
-          ? await ConversationService.createConversation({
-              type: 'openclaw-gateway',
-              model,
-              source,
-              name,
-              channelChatId,
-              extra: {},
-            })
-          : await ConversationService.createConversation({
-              type: 'acp',
-              model,
-              source,
-              name,
-              channelChatId,
-              extra: {
-                backend: backend as AcpBackend,
-                customAgentId,
-                agentName,
-              },
-            });
+        : await ConversationService.createConversation({
+            type: 'acp',
+            model,
+            source,
+            name,
+            channelChatId,
+            extra: {
+              backend: backend as AcpBackend,
+              customAgentId,
+              agentName,
+            },
+          });
 
   if (!result.success || !result.conversation) {
     return createErrorResponse(`Failed to create session: ${result.error || 'Unknown error'}`);
@@ -409,7 +389,7 @@ export const handleAgentShow: ActionHandler = async (context) => {
   // Get current agent type from session (scoped by chatId)
   const userId = context.channelUser?.id;
   const session = userId ? sessionManager.getSession(userId, context.chatId) : null;
-  const currentAgent = session?.agentType || 'gemini';
+  const currentAgent = session?.agentType || 'acp';
 
   // Get available agents dynamically
   const availableAgents = getAvailableChannelAgents();
@@ -513,7 +493,6 @@ export const handleAgentSelect: ActionHandler = async (context, params) => {
  */
 function getAgentDisplayName(agentType: ChannelAgentType): string {
   const names: Record<ChannelAgentType, string> = {
-    gemini: '🤖 Gemini',
     acp: '🧠 Claude',
     codex: '⚡ Codex',
     'openclaw-gateway': '🦞 OpenClaw',
@@ -527,7 +506,6 @@ function getAgentDisplayName(agentType: ChannelAgentType): string {
  */
 function backendToChannelAgentType(backend: string): ChannelAgentType | null {
   const mapping: Record<string, ChannelAgentType> = {
-    gemini: 'gemini',
     claude: 'acp',
     codex: 'codex',
     'openclaw-gateway': 'openclaw-gateway',
@@ -540,7 +518,6 @@ function backendToChannelAgentType(backend: string): ChannelAgentType | null {
  */
 function getAgentEmoji(backend: string): string {
   const emojis: Record<string, string> = {
-    gemini: '🤖',
     claude: '🧠',
     codex: '⚡',
     'openclaw-gateway': '🦞',
@@ -556,10 +533,6 @@ function getAvailableChannelAgents(): AgentDisplayInfo[] {
   const detectedAgents = acpDetector.getDetectedAgents();
   const availableAgents: AgentDisplayInfo[] = [];
   const seenTypes = new Set<ChannelAgentType>();
-
-  // Always include Gemini as it's built-in
-  availableAgents.push({ type: 'gemini', emoji: '🤖', name: 'Gemini' });
-  seenTypes.add('gemini');
 
   // Add detected ACP agents (claude, codex, etc.)
   for (const agent of detectedAgents) {

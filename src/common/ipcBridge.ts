@@ -54,13 +54,6 @@ export const conversation = {
   },
 };
 
-// Gemini对话相关接口 - 复用统一的conversation接口
-export const geminiConversation = {
-  sendMessage: conversation.sendMessage,
-  confirmMessage: bridge.buildProvider<IBridgeResponse, IConfirmMessageParams>('input.confirm.message'),
-  responseStream: conversation.responseStream,
-};
-
 // CDP status interface
 export interface ICdpStatus {
   /** Whether CDP is currently enabled */
@@ -209,11 +202,6 @@ export const googleAuth = {
   login: bridge.buildProvider<IBridgeResponse<{ account: string }>, { proxy?: string }>('google.auth.login'),
   logout: bridge.buildProvider<void, {}>('google.auth.logout'),
   status: bridge.buildProvider<IBridgeResponse<{ account: string }>, { proxy?: string }>('google.auth.status'),
-};
-
-// 订阅状态查询：用于动态决定是否展示 gemini-3.1-pro-preview / subscription check for Gemini models
-export const gemini = {
-  subscriptionStatus: bridge.buildProvider<IBridgeResponse<{ isSubscriber: boolean; tier?: string; lastChecked: number; message?: string }>, { proxy?: string }>('gemini.subscription-status'),
 };
 
 // AWS Bedrock 相关接口 / AWS Bedrock interfaces
@@ -481,7 +469,7 @@ export interface IConfirmMessageParams {
 }
 
 export interface ICreateConversationParams {
-  type: 'gemini' | 'acp' | 'codex' | 'openclaw-gateway' | 'nanobot';
+  type: 'acp' | 'codex' | 'openclaw-gateway' | 'nanobot';
   id?: string;
   name?: string;
   model: TProviderWithModel;

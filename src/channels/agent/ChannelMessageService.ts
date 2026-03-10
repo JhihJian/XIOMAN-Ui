@@ -94,9 +94,7 @@ export class ChannelMessageService {
       return;
     }
 
-    // Track 'start' events to count multi-turn continuations (e.g., tool call → model response).
-    // The Gemini agent emits a new 'start' for each submitQuery turn, including continuations
-    // triggered by onAllToolCallsComplete. We must wait for all turns to finish.
+    // Track 'start' events to count multi-turn continuations (e.g., tool call -> model response).
     if (event.type === 'start') {
       stream.turnCount++;
       return;
@@ -199,9 +197,8 @@ export class ChannelMessageService {
         finishCount: 0,
       });
 
-      // Build payload based on agent type.
-      // Gemini expects { input }, ACP/Codex expect { content }.
-      const payload: { input?: string; content?: string; msg_id: string } = task.type === 'gemini' ? { input: message, msg_id: msgId } : task.type === 'acp' || task.type === 'codex' ? { content: message, msg_id: msgId } : { content: message, msg_id: msgId };
+      // All agents expect { content, msg_id }
+      const payload = { content: message, msg_id: msgId };
 
       task.sendMessage(payload).catch((error: Error) => {
         const errorMessage = `Error: ${error.message || 'Failed to send message'}`;

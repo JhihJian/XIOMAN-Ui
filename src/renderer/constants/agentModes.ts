@@ -55,11 +55,6 @@ export const AGENT_MODES: Record<string, AgentModeOption[]> = {
     { value: 'plan', label: 'Plan' },
     { value: 'yolo', label: 'YOLO' },
   ],
-  gemini: [
-    { value: 'default', label: 'Default' },
-    { value: 'autoEdit', label: 'Auto-Accept Edits' },
-    { value: 'yolo', label: 'YOLO' },
-  ],
   codex: [
     { value: 'default', label: 'Plan' },
     { value: 'autoEdit', label: 'Auto Edit' },

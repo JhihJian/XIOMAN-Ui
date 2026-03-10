@@ -10,8 +10,8 @@ import { channel } from '@/common/ipcBridge';
 import { ConfigStorage } from '@/common/storage';
 import AionScrollArea from '@/renderer/components/base/AionScrollArea';
 import { useModelProviderList } from '@/renderer/hooks/useModelProviderList';
-import type { GeminiModelSelection } from '@/renderer/pages/conversation/gemini/useGeminiModelSelection';
-import { useGeminiModelSelection } from '@/renderer/pages/conversation/gemini/useGeminiModelSelection';
+import { useChannelModelSelection } from '@/renderer/components/ChannelModelSelector';
+import type { ChannelModelSelection } from '@/renderer/components/ChannelModelSelector';
 import { Message } from '@arco-design/web-react';
 import { CheckOne } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -26,19 +26,19 @@ import TelegramConfigForm from './TelegramConfigForm';
 type ChannelModelConfigKey = 'assistant.telegram.defaultModel' | 'assistant.lark.defaultModel' | 'assistant.dingtalk.defaultModel';
 
 /**
- * Internal hook: wraps useGeminiModelSelection with ConfigStorage persistence
+ * Internal hook: wraps useChannelModelSelection with ConfigStorage persistence
  * for a specific channel config key (e.g. 'assistant.telegram.defaultModel').
  *
  * Restoration is done by resolving the saved model reference into a full
  * TProviderWithModel and passing it as `initialModel` — this avoids triggering
  * the onSelectModel callback (and its toast) on mount.
  */
-const useChannelModelSelection = (configKey: ChannelModelConfigKey): GeminiModelSelection => {
+const useChannelModelSelectionWithPersistence = (configKey: ChannelModelConfigKey): ChannelModelSelection & { onSelectModel?: (provider: IProvider, modelName: string) => Promise<boolean> } => {
   const { t } = useTranslation();
 
   // Resolve persisted model into a full TProviderWithModel for initialModel.
   // useModelProviderList is SWR-backed so the duplicate call inside
-  // useGeminiModelSelection is deduplicated automatically.
+  // useChannelModelSelection is deduplicated automatically.
   const { providers } = useModelProviderList();
   const [resolvedInitialModel, setResolvedInitialModel] = useState<TProviderWithModel | undefined>(undefined);
   const [restored, setRestored] = useState(false);
@@ -58,16 +58,11 @@ const useChannelModelSelection = (configKey: ChannelModelConfigKey): GeminiModel
         const provider = providers.find((p) => p.id === saved.id);
         if (!provider) {
           // Provider not found in current list — don't mark as restored.
-          // The Google Auth provider may load after API-key providers;
           // leaving restored=false lets this effect re-run when providers update.
           return;
         }
 
-        // Google Auth provider's model array only contains top-level modes
-        // ('auto', 'auto-gemini-2.5', 'manual'), but sub-model values like
-        // 'gemini-2.5-flash' are also valid — skip strict membership check.
-        const isGoogleAuth = provider.platform?.toLowerCase().includes('gemini-with-google-auth');
-        if (isGoogleAuth || provider.model?.includes(saved.useModel)) {
+        if (provider.model?.includes(saved.useModel)) {
           setResolvedInitialModel({
             ...provider,
             useModel: saved.useModel,
@@ -97,7 +92,7 @@ const useChannelModelSelection = (configKey: ChannelModelConfigKey): GeminiModel
         await channel.syncChannelSettings
           .invoke({
             platform,
-            agent: (currentAgent as { backend: string; customAgentId?: string; name?: string }) || { backend: 'gemini' },
+            agent: (currentAgent as { backend: string; customAgentId?: string; name?: string }) || { backend: 'claude' },
             model: modelRef,
           })
           .catch((err) => console.warn(`[ChannelSettings] syncChannelSettings failed for ${platform}:`, err));
@@ -113,7 +108,17 @@ const useChannelModelSelection = (configKey: ChannelModelConfigKey): GeminiModel
     [configKey, t]
   );
 
-  return useGeminiModelSelection({ initialModel: resolvedInitialModel, onSelectModel });
+  // Use the base hook
+  const baseSelection = useChannelModelSelection(configKey);
+
+  // Return with the onSelectModel callback
+  return useMemo(
+    () => ({
+      ...baseSelection,
+      onSelectModel,
+    }),
+    [baseSelection, onSelectModel]
+  );
 };
 
 /**
@@ -145,9 +150,9 @@ const ChannelModalContent: React.FC = () => {
   });
 
   // Model selection state — uses unified hook with ConfigStorage persistence
-  const telegramModelSelection = useChannelModelSelection('assistant.telegram.defaultModel');
-  const larkModelSelection = useChannelModelSelection('assistant.lark.defaultModel');
-  const dingtalkModelSelection = useChannelModelSelection('assistant.dingtalk.defaultModel');
+  const telegramModelSelection = useChannelModelSelectionWithPersistence('assistant.telegram.defaultModel');
+  const larkModelSelection = useChannelModelSelectionWithPersistence('assistant.lark.defaultModel');
+  const dingtalkModelSelection = useChannelModelSelectionWithPersistence('assistant.dingtalk.defaultModel');
 
   // Load plugin status
   const loadPluginStatus = useCallback(async () => {

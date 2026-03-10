@@ -12,7 +12,6 @@ import mcp from './mcp.json';
 import acp from './acp.json';
 import codex from './codex.json';
 import tools from './tools.json';
-import gemini from './gemini.json';
 import cron from './cron.json';
 import guid from './guid.json';
 import agent from './agent.json';
@@ -31,7 +30,6 @@ export default {
   acp,
   codex,
   tools,
-  gemini,
   cron,
   guid,
   agent,

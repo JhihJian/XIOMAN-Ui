@@ -7,8 +7,6 @@
 import { ipcBridge } from '@/common';
 import type { IProvider, TProviderWithModel } from '@/common/storage';
 import { ConfigStorage } from '@/common/storage';
-import { uuid } from '@/common/utils';
-import { useGeminiGoogleAuthModels } from '@/renderer/hooks/useGeminiGoogleAuthModels';
 import { hasAvailableModels } from '../utils/modelUtils';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR from 'swr';
@@ -34,72 +32,41 @@ const isModelKeyAvailable = (key: string | null, providers?: IProvider[]) => {
 
 export type GuidModelSelectionResult = {
   modelList: IProvider[];
-  isGoogleAuth: boolean;
-  geminiModeOptions: ReturnType<typeof useGeminiGoogleAuthModels>['geminiModeOptions'];
-  geminiModeLookup: Map<string, ReturnType<typeof useGeminiGoogleAuthModels>['geminiModeOptions'][number]>;
-  formatGeminiModelLabel: (provider: { platform?: string } | undefined, modelName?: string) => string;
   currentModel: TProviderWithModel | undefined;
   setCurrentModel: (modelInfo: TProviderWithModel) => Promise<void>;
+  formatModelLabel: (provider: { platform?: string } | undefined, modelName?: string) => string;
+  // Legacy properties for backward compatibility - Gemini-related
+  isGoogleAuth: boolean;
+  geminiModeOptions: Array<{ value: string; label: string }>;
+  geminiModeLookup: Map<string, { value: string; label: string }>;
+  formatGeminiModelLabel: (provider: { platform?: string } | undefined, modelName?: string) => string;
 };
 
 /**
- * Hook that manages Gemini model list and selection state for the Guid page.
+ * Hook that manages model list and selection state for the Guid page.
+ * Simplified version without Gemini-specific logic.
  */
 export const useGuidModelSelection = (): GuidModelSelectionResult => {
-  const { geminiModeOptions, isGoogleAuth } = useGeminiGoogleAuthModels();
   const { data: modelConfig } = useSWR('model.config.welcome', () => {
     return ipcBridge.mode.getModelConfig.invoke().then((data) => {
       return (data || []).filter((platform) => !!platform.model.length);
     });
   });
 
-  const geminiModelValues = useMemo(() => geminiModeOptions.map((option) => option.value), [geminiModeOptions]);
-
   const modelList = useMemo(() => {
-    let allProviders: IProvider[] = [];
+    return (modelConfig || []).filter(hasAvailableModels);
+  }, [modelConfig]);
 
-    if (isGoogleAuth) {
-      const geminiProvider: IProvider = {
-        id: uuid(),
-        name: 'Gemini Google Auth',
-        platform: 'gemini-with-google-auth',
-        baseUrl: '',
-        apiKey: '',
-        model: geminiModelValues,
-        capabilities: [{ type: 'text' }, { type: 'vision' }, { type: 'function_calling' }],
-      };
-      allProviders = [geminiProvider, ...(modelConfig || [])];
-    } else {
-      allProviders = modelConfig || [];
-    }
-
-    return allProviders.filter(hasAvailableModels);
-  }, [geminiModelValues, isGoogleAuth, modelConfig]);
-
-  const geminiModeLookup = useMemo(() => {
-    const lookup = new Map<string, (typeof geminiModeOptions)[number]>();
-    geminiModeOptions.forEach((option) => lookup.set(option.value, option));
-    return lookup;
-  }, [geminiModeOptions]);
-
-  const formatGeminiModelLabel = useCallback(
-    (provider: { platform?: string } | undefined, modelName?: string) => {
-      if (!modelName) return '';
-      const isGoogleProvider = provider?.platform?.toLowerCase().includes('gemini-with-google-auth');
-      if (isGoogleProvider) {
-        return geminiModeLookup.get(modelName)?.label || modelName;
-      }
-      return modelName;
-    },
-    [geminiModeLookup]
-  );
+  const formatModelLabel = useCallback((_provider: { platform?: string } | undefined, modelName?: string) => {
+    return modelName || '';
+  }, []);
 
   const [currentModel, _setCurrentModel] = useState<TProviderWithModel>();
   const selectedModelKeyRef = useRef<string | null>(null);
 
   const setCurrentModel = useCallback(async (modelInfo: TProviderWithModel) => {
     selectedModelKeyRef.current = buildModelKey(modelInfo.id, modelInfo.useModel);
-    await ConfigStorage.set('gemini.defaultModel', { id: modelInfo.id, useModel: modelInfo.useModel }).catch((error) => {
+    await ConfigStorage.set('defaultModel', { id: modelInfo.id, useModel: modelInfo.useModel }).catch((error) => {
       console.error('Failed to save default model:', error);
     });
     _setCurrentModel(modelInfo);
@@ -118,7 +85,7 @@ export const useGuidModelSelection = (): GuidModelSelectionResult => {
         }
         return;
       }
-      const savedModel = await ConfigStorage.get('gemini.defaultModel');
+      const savedModel = await ConfigStorage.get('defaultModel');
 
       const isNewFormat = savedModel && typeof savedModel === 'object' && 'id' in savedModel;
 
@@ -155,13 +122,16 @@ export const useGuidModelSelection = (): GuidModelSelectionResult => {
       console.error('Failed to set default model:', error);
     });
   }, [modelList]);
+
   return {
     modelList,
-    isGoogleAuth,
-    geminiModeOptions,
-    geminiModeLookup,
-    formatGeminiModelLabel,
     currentModel,
     setCurrentModel,
+    formatModelLabel,
+    // Legacy properties for backward compatibility - Gemini-related, all values are empty/false
+    isGoogleAuth: false,
+    geminiModeOptions: [],
+    geminiModeLookup: new Map(),
+    formatGeminiModelLabel: formatModelLabel,
   };
 };

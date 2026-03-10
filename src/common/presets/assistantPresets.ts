@@ -26,7 +26,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'openclaw-setup',
     avatar: '🦞',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/openclaw-setup',
     ruleFiles: {
       'en-US': 'openclaw-setup.md',
@@ -49,7 +49,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'cowork',
     avatar: 'cowork.svg',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/cowork',
     ruleFiles: {
       'en-US': 'cowork.md',
@@ -76,7 +76,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'pptx-generator',
     avatar: '📊',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/pptx-generator',
     ruleFiles: {
       'en-US': 'pptx-generator.md',
@@ -98,7 +98,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'pdf-to-ppt',
     avatar: '📄',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/pdf-to-ppt',
     ruleFiles: {
       'en-US': 'pdf-to-ppt.md',
@@ -120,7 +120,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'game-3d',
     avatar: '🎮',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/game-3d',
     ruleFiles: {
       'en-US': 'game-3d.md',
@@ -142,7 +142,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'ui-ux-pro-max',
     avatar: '🎨',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/ui-ux-pro-max',
     ruleFiles: {
       'en-US': 'ui-ux-pro-max.md',
@@ -164,7 +164,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'planning-with-files',
     avatar: '📋',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/planning-with-files',
     ruleFiles: {
       'en-US': 'planning-with-files.md',
@@ -186,7 +186,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'human-3-coach',
     avatar: '🧭',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/human-3-coach',
     ruleFiles: {
       'en-US': 'human-3-coach.md',
@@ -208,7 +208,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'social-job-publisher',
     avatar: '📣',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/social-job-publisher',
     ruleFiles: {
       'en-US': 'social-job-publisher.md',
@@ -235,7 +235,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'moltbook',
     avatar: '🦞',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/moltbook',
     ruleFiles: {
       'en-US': 'moltbook.md',
@@ -262,7 +262,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'beautiful-mermaid',
     avatar: '📈',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/beautiful-mermaid',
     ruleFiles: {
       'en-US': 'beautiful-mermaid.md',
@@ -285,7 +285,7 @@ export const ASSISTANT_PRESETS: AssistantPreset[] = [
   {
     id: 'story-roleplay',
     avatar: '📖',
-    presetAgentType: 'gemini',
+    presetAgentType: 'acp',
     resourceDir: 'assistant/story-roleplay',
     ruleFiles: {
       'en-US': 'story-roleplay.md',

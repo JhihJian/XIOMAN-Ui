@@ -69,7 +69,6 @@ export default defineConfig(({ mode }) => {
             // Worker entry files are output alongside index.js in out/main/.
             // BaseAgentManager.resolveWorkerDir() handles the case where code
             // splitting places it in a chunks/ subdirectory.
-            gemini: resolve('src/worker/gemini.ts'),
             acp: resolve('src/worker/acp.ts'),
             codex: resolve('src/worker/codex.ts'),
             'openclaw-gateway': resolve('src/worker/openclaw-gateway.ts'),
