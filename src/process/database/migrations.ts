@@ -908,13 +908,122 @@ const migration_v15: IMigration = {
 };
 
 /**
+ * Migration v15 -> v16: Remove non-ACP agent types (codex, nanobot, openclaw-gateway)
+ * Convert existing conversations to acp type with backend set to 'claude'
+ */
+const migration_v16: IMigration = {
+  version: 16,
+  name: 'Remove non-ACP agent types',
+  up: (db) => {
+    // Convert codex conversations to acp with backend = 'claude'
+    db.exec(`
+      UPDATE conversations
+      SET type = 'acp',
+          extra = json_set(extra, '$.backend', 'claude')
+      WHERE type = 'codex';
+    `);
+
+    // Convert nanobot conversations to acp with backend = 'claude'
+    db.exec(`
+      UPDATE conversations
+      SET type = 'acp',
+          extra = json_set(extra, '$.backend', 'claude')
+      WHERE type = 'nanobot';
+    `);
+
+    // Convert openclaw-gateway conversations to acp with backend = 'claude'
+    db.exec(`
+      UPDATE conversations
+      SET type = 'acp',
+          extra = json_set(extra, '$.backend', 'claude')
+      WHERE type = 'openclaw-gateway';
+    `);
+
+    // Recreate conversations table with only 'acp' in CHECK constraint
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS conversations_v16 (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('acp')),
+        extra TEXT NOT NULL,
+        model TEXT,
+        status TEXT CHECK(status IN ('pending', 'running', 'finished')),
+        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark', 'dingtalk')),
+        channel_chat_id TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      INSERT INTO conversations_v16 (id, user_id, name, type, extra, model, status, source, channel_chat_id, created_at, updated_at)
+      SELECT id, user_id, name, type, extra, model, status, source, channel_chat_id, created_at, updated_at FROM conversations;
+
+      DROP TABLE conversations;
+      ALTER TABLE conversations_v16 RENAME TO conversations;
+
+      CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id);
+      CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at);
+      CREATE INDEX IF NOT EXISTS idx_conversations_type ON conversations(type);
+      CREATE INDEX IF NOT EXISTS idx_conversations_user_updated ON conversations(user_id, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_conversations_source ON conversations(source);
+      CREATE INDEX IF NOT EXISTS idx_conversations_source_updated ON conversations(source, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_conversations_source_chat ON conversations(source, channel_chat_id, updated_at DESC);
+    `);
+
+    console.log('[Migration v16] Removed non-ACP agent types (codex, nanobot, openclaw-gateway)');
+  },
+  down: (db) => {
+    // Rollback is not fully recoverable - original agent type information is lost
+    // We can restore the CHECK constraint but cannot determine original types
+    console.warn('[Migration v16] Rollback warning: Cannot recover original agent types (codex, nanobot, openclaw-gateway)');
+    console.warn('[Migration v16] All converted conversations will remain as acp type');
+
+    // Restore the CHECK constraint to include all types
+    // but note that data recovery is not possible
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS conversations_rollback (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL CHECK(type IN ('acp', 'codex', 'openclaw-gateway', 'nanobot')),
+        extra TEXT NOT NULL,
+        model TEXT,
+        status TEXT CHECK(status IN ('pending', 'running', 'finished')),
+        source TEXT CHECK(source IS NULL OR source IN ('aionui', 'telegram', 'lark', 'dingtalk')),
+        channel_chat_id TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      INSERT INTO conversations_rollback (id, user_id, name, type, extra, model, status, source, channel_chat_id, created_at, updated_at)
+      SELECT id, user_id, name, type, extra, model, status, source, channel_chat_id, created_at, updated_at FROM conversations;
+
+      DROP TABLE conversations;
+      ALTER TABLE conversations_rollback RENAME TO conversations;
+
+      CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id);
+      CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at);
+      CREATE INDEX IF NOT EXISTS idx_conversations_type ON conversations(type);
+      CREATE INDEX IF NOT EXISTS idx_conversations_user_updated ON conversations(user_id, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_conversations_source ON conversations(source);
+      CREATE INDEX IF NOT EXISTS idx_conversations_source_updated ON conversations(source, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_conversations_source_chat ON conversations(source, channel_chat_id, updated_at DESC);
+    `);
+
+    console.log('[Migration v16] Rolled back: Restored CHECK constraint (data not recoverable)');
+  },
+};
+
+/**
  * All migrations in order
  */
 // prettier-ignore
 export const ALL_MIGRATIONS: IMigration[] = [
   migration_v1, migration_v2, migration_v3, migration_v4, migration_v5, migration_v6,
   migration_v7, migration_v8, migration_v9, migration_v10, migration_v11, migration_v12,
-  migration_v13, migration_v14, migration_v15,
+  migration_v13, migration_v14, migration_v15, migration_v16,
 ];
 
 /**
