@@ -460,7 +460,7 @@ interface ISendMessageParams {
   loading_id?: string;
 }
 
-// Unified confirm message params for all agents (Gemini, ACP, Codex)
+// Unified confirm message params for all agents (ACP)
 export interface IConfirmMessageParams {
   confirmKey: string;
   msg_id: string;
@@ -469,7 +469,7 @@ export interface IConfirmMessageParams {
 }
 
 export interface ICreateConversationParams {
-  type: 'acp' | 'codex' | 'openclaw-gateway' | 'nanobot';
+  type: 'acp';
   id?: string;
   name?: string;
   model: TProviderWithModel;
@@ -483,7 +483,7 @@ export interface ICreateConversationParams {
     agentName?: string;
     customAgentId?: string;
     context?: string;
-    contextFileName?: string; // For gemini preset agents
+    contextFileName?: string; // For preset agents
     // System rules for smart assistants
     presetRules?: string; // system rules injected at initialization
     /** Enabled skills list for filtering SkillManager skills */
@@ -491,40 +491,22 @@ export interface ICreateConversationParams {
     /**
      * Preset context/rules to inject into the first message.
      * Used by smart assistants to provide custom prompts/rules.
-     * For Gemini: injected via contextContent
-     * For ACP/Codex: injected via <system_instruction> tag in first message
+     * For ACP: injected via <system_instruction> tag in first message
      */
     presetContext?: string;
     /** 预设助手 ID，用于在会话面板显示助手名称和头像 / Preset assistant ID for displaying name and avatar in conversation panel */
     presetAssistantId?: string;
     /** Initial session mode selected on Guid page (from AgentModeSelector) */
     sessionMode?: string;
-    /** User-selected Codex model from Guid page */
-    codexModel?: string;
     /** Pre-selected ACP model from Guid page (cached model list) */
     currentModelId?: string;
-    /** Runtime validation snapshot used for post-switch strong checks (OpenClaw) */
-    runtimeValidation?: {
-      expectedWorkspace?: string;
-      expectedBackend?: string;
-      expectedAgentName?: string;
-      expectedCliPath?: string;
-      expectedModel?: string;
-      expectedIdentityHash?: string | null;
-      switchedAt?: number;
-    };
     /** Explicit marker for temporary health-check conversations */
     isHealthCheck?: boolean;
   };
 }
 interface IResetConversationParams {
   id?: string;
-  gemini?: {
-    clearCachedCredentialFile?: boolean;
-  };
 }
-
-// 获取文件夹或文件列表
 export interface IDirOrFile {
   name: string;
   fullPath: string;

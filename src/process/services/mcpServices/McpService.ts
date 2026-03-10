@@ -8,11 +8,8 @@ import { execSync } from 'child_process';
 import type { AcpBackend } from '../../../types/acpTypes';
 import type { IMcpServer } from '../../../common/storage';
 import { ClaudeMcpAgent } from './agents/ClaudeMcpAgent';
-import { CodebuddyMcpAgent } from './agents/CodebuddyMcpAgent';
-import { QwenMcpAgent } from './agents/QwenMcpAgent';
 import { IflowMcpAgent } from './agents/IflowMcpAgent';
 import { AionuiMcpAgent } from './agents/AionuiMcpAgent';
-import { CodexMcpAgent } from './agents/CodexMcpAgent';
 import type { IMcpProtocol, DetectedMcpServer, McpConnectionTestResult, McpSyncResult, McpSource } from './McpProtocol';
 
 /**
@@ -75,11 +72,8 @@ export class McpService {
   constructor() {
     this.agents = new Map([
       ['claude', new ClaudeMcpAgent()],
-      ['codebuddy', new CodebuddyMcpAgent()],
-      ['qwen', new QwenMcpAgent()],
       ['iflow', new IflowMcpAgent()],
       ['aionui', new AionuiMcpAgent()], // AionUi 本地 @office-ai/aioncli-core
-      ['codex', new CodexMcpAgent()],
     ]);
   }
 

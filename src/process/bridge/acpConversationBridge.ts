@@ -6,13 +6,10 @@
 
 import { acpDetector } from '@/agent/acp/AcpDetector';
 import { AcpConnection } from '@/agent/acp/AcpConnection';
-import { buildAcpModelInfo, summarizeAcpModelInfo } from '@/agent/acp/modelInfo';
-import { CodexConnection } from '@/agent/codex/connection/CodexConnection';
+import { buildAcpModelInfo } from '@/agent/acp/modelInfo';
 import WorkerManage from '@/process/WorkerManage';
 import AcpAgentManager from '@/process/task/AcpAgentManager';
-import CodexAgentManager from '@/process/task/CodexAgentManager';
 import { mcpService } from '@/process/services/mcpServices/McpService';
-import { mainLog, mainWarn } from '@/process/utils/mainLogger';
 import { ipcBridge } from '../../common';
 import * as os from 'os';
 
@@ -80,8 +77,8 @@ export function initAcpConversationBridge(): void {
     const agents = acpDetector.getDetectedAgents();
     const agent = agents.find((a) => a.backend === backend);
 
-    // Skip CLI check for claude/codebuddy (uses npx) and codex (has its own detection)
-    if (!agent?.cliPath && backend !== 'claude' && backend !== 'codebuddy' && backend !== 'codex') {
+    // Skip CLI check for claude (uses npx)
+    if (!agent?.cliPath && backend !== 'claude') {
       return {
         success: false,
         msg: `${backend} CLI not found`,
@@ -91,55 +88,7 @@ export function initAcpConversationBridge(): void {
 
     const tempDir = os.tmpdir();
 
-    // Step 2: Handle Codex separately - it uses MCP protocol, not ACP
-    if (backend === 'codex') {
-      const codexConnection = new CodexConnection();
-      try {
-        // Start Codex MCP server
-        await codexConnection.start(agent?.cliPath || 'codex', tempDir);
-
-        // Wait for server to be ready and ping it
-        await codexConnection.waitForServerReady(15000);
-        const pingResult = await codexConnection.ping(5000);
-
-        if (!pingResult) {
-          throw new Error('Codex server not responding to ping');
-        }
-
-        const latency = Date.now() - startTime;
-        void codexConnection.stop();
-
-        return {
-          success: true,
-          data: { available: true, latency },
-        };
-      } catch (error) {
-        try {
-          void codexConnection.stop();
-        } catch {
-          // Ignore stop errors
-        }
-
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        const lowerError = errorMsg.toLowerCase();
-
-        if (lowerError.includes('auth') || lowerError.includes('login') || lowerError.includes('api key') || lowerError.includes('not found') || lowerError.includes('command not found')) {
-          return {
-            success: false,
-            msg: `codex not available`,
-            data: { available: false, error: errorMsg },
-          };
-        }
-
-        return {
-          success: false,
-          msg: `codex health check failed: ${errorMsg}`,
-          data: { available: false, error: errorMsg },
-        };
-      }
-    }
-
-    // Step 3: For ACP-based agents (claude, gemini, qwen, etc.)
+    // Step 2: For ACP-based agents (claude, custom, etc.)
     const connection = new AcpConnection();
 
     try {
@@ -196,7 +145,7 @@ export function initAcpConversationBridge(): void {
   ipcBridge.acpConversation.getMode.provider(async ({ conversationId }) => {
     try {
       const task = await WorkerManage.getTaskByIdRollbackBuild(conversationId);
-      if (!task || !(task instanceof AcpAgentManager || task instanceof CodexAgentManager)) {
+      if (!task || !(task instanceof AcpAgentManager)) {
         return { success: true, data: { mode: 'default', initialized: false } };
       }
       return { success: true, data: task.getMode() };
@@ -205,12 +154,12 @@ export function initAcpConversationBridge(): void {
     }
   });
 
-  // Get model info for ACP/Codex agents
-  // 获取 ACP/Codex 代理的模型信息
+  // Get model info for ACP agents
+  // 获取 ACP 代理的模型信息
   ipcBridge.acpConversation.getModelInfo.provider(async ({ conversationId }) => {
     try {
       const task = await WorkerManage.getTaskByIdRollbackBuild(conversationId);
-      if (!task || !(task instanceof AcpAgentManager || task instanceof CodexAgentManager)) {
+      if (!task || !(task instanceof AcpAgentManager)) {
         return { success: true, data: { modelInfo: null } };
       }
       return { success: true, data: { modelInfo: task.getModelInfo() } };
@@ -223,7 +172,7 @@ export function initAcpConversationBridge(): void {
     const agents = acpDetector.getDetectedAgents();
     const agent = agents.find((item) => item.backend === backend);
 
-    if (!agent?.cliPath && backend !== 'claude' && backend !== 'codebuddy' && backend !== 'codex') {
+    if (!agent?.cliPath && backend !== 'claude') {
       return {
         success: false,
         msg: `${backend} CLI not found`,
@@ -238,20 +187,10 @@ export function initAcpConversationBridge(): void {
       await connection.newSession(tempDir);
 
       const modelInfo = buildAcpModelInfo(connection.getConfigOptions(), connection.getModels());
-      if (backend === 'codex') {
-        const initializeResult = connection.getInitializeResponse() as unknown as Record<string, unknown> | null;
-        mainLog('[ACP codex]', 'probeModelInfo completed', {
-          initializeAgentInfo: initializeResult?.agentInfo || null,
-          modelInfo: summarizeAcpModelInfo(modelInfo),
-        });
-      }
 
       return { success: true, data: { modelInfo } };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      if (backend === 'codex') {
-        mainWarn('[ACP codex]', 'probeModelInfo failed', errorMsg);
-      }
       return { success: false, msg: errorMsg };
     } finally {
       try {
@@ -277,15 +216,15 @@ export function initAcpConversationBridge(): void {
     }
   });
 
-  // Set session mode for ACP agents (claude, qwen, etc.)
-  // 设置 ACP 代理的会话模式（claude、qwen 等）
+  // Set session mode for ACP agents (claude, custom, etc.)
+  // 设置 ACP 代理的会话模式（claude、custom 等）
   ipcBridge.acpConversation.setMode.provider(async ({ conversationId, mode }) => {
     try {
       const task = await WorkerManage.getTaskByIdRollbackBuild(conversationId);
       if (!task) {
         return { success: false, msg: 'Conversation not found' };
       }
-      if (!(task instanceof AcpAgentManager || task instanceof CodexAgentManager)) {
+      if (!(task instanceof AcpAgentManager)) {
         return { success: false, msg: 'Mode switching not supported for this agent type' };
       }
       return await task.setMode(mode);

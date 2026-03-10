@@ -120,7 +120,7 @@ export interface IChannelUserRow {
 /**
  * Agent types supported in assistant sessions
  */
-export type ChannelAgentType = 'acp' | 'codex' | 'openclaw-gateway';
+export type ChannelAgentType = 'acp';
 
 /**
  * User session in the assistant system

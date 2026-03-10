@@ -144,15 +144,6 @@ class AcpDetector {
       }
     }
 
-    // 始终添加内置 Gemini 作为默认选项（无需检测其他 CLI）
-    // Always add built-in Gemini as default option (no CLI detection needed)
-    detected.unshift({
-      backend: 'gemini',
-      name: 'Gemini CLI',
-      cliPath: undefined,
-      acpArgs: undefined,
-    });
-
     // Check for custom agents configuration - insert after claude if found
     await this.addCustomAgentsToList(detected);
 
