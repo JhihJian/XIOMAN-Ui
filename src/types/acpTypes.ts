@@ -18,7 +18,7 @@
  * 预设助手的主 Agent 类型，用于决定创建哪种类型的对话
  * The primary agent type for preset assistants, used to determine which conversation type to create.
  */
-export type PresetAgentType = 'gemini' | 'claude' | 'codex' | 'codebuddy' | 'opencode' | 'qwen';
+export type PresetAgentType = 'claude';
 
 /**
  * 使用 ACP 协议的预设 Agent 类型（需要通过 ACP 后端路由）
@@ -27,10 +27,7 @@ export type PresetAgentType = 'gemini' | 'claude' | 'codex' | 'codebuddy' | 'ope
  * 这些类型会在创建对话时使用对应的 ACP 后端，而不是 Gemini 原生对话
  * These types will use corresponding ACP backend when creating conversation, instead of native Gemini
  */
-export const ACP_ROUTED_PRESET_TYPES: readonly PresetAgentType[] = ['claude', 'codebuddy', 'opencode', 'codex', 'qwen'] as const;
-
-export const CODEX_ACP_BRIDGE_VERSION = '0.9.5';
-export const CODEX_ACP_NPX_PACKAGE = `@zed-industries/codex-acp@${CODEX_ACP_BRIDGE_VERSION}`;
+export const ACP_ROUTED_PRESET_TYPES: readonly PresetAgentType[] = ['claude'] as const;
 
 export const CLAUDE_ACP_BRIDGE_VERSION = '0.18.0';
 export const CLAUDE_ACP_NPX_PACKAGE = `@zed-industries/claude-agent-acp@${CLAUDE_ACP_BRIDGE_VERSION}`;
@@ -44,24 +41,7 @@ export function isAcpRoutedPresetType(type: PresetAgentType | undefined): boolea
 }
 
 // 全部后端类型定义 - 包括暂时不支持的 / All backend types - including temporarily unsupported ones
-export type AcpBackendAll =
-  | 'claude' // Claude ACP
-  | 'gemini' // Google Gemini ACP
-  | 'qwen' // Qwen Code ACP
-  | 'iflow' // iFlow CLI ACP
-  | 'codex' // OpenAI Codex ACP (via codex-acp bridge)
-  | 'codebuddy' // Tencent CodeBuddy Code CLI
-  | 'droid' // Factory Droid CLI (ACP via `droid exec --output-format acp`)
-  | 'goose' // Block's Goose CLI
-  | 'auggie' // Augment Code CLI
-  | 'kimi' // Kimi CLI (Moonshot)
-  | 'opencode' // OpenCode CLI
-  | 'copilot' // GitHub Copilot CLI
-  | 'qoder' // Qoder CLI
-  | 'openclaw-gateway' // OpenClaw Gateway WebSocket
-  | 'vibe' // Mistral Vibe CLI
-  | 'nanobot' // nanobot CLI
-  | 'custom'; // User-configured custom ACP agent
+export type AcpBackendAll = 'claude' | 'custom';
 
 /**
  * 潜在的 ACP CLI 工具列表
@@ -88,19 +68,19 @@ const DEFAULT_ACP_ARGS = ['--experimental-acp'];
 
 /**
  * 从 ACP_BACKENDS_ALL 生成可检测的 CLI 列表
- * 仅包含有 cliCommand 且已启用的后端（排除 gemini 和 custom）
+ * 仅包含有 cliCommand 且已启用的后端（排除 custom）
  * Generate detectable CLI list from ACP_BACKENDS_ALL
- * Only includes enabled backends with cliCommand (excludes gemini and custom)
+ * Only includes enabled backends with cliCommand (excludes custom)
  */
 function generatePotentialAcpClis(): PotentialAcpCli[] {
   // 需要在 ACP_BACKENDS_ALL 定义之后调用，所以使用延迟初始化
   // Must be called after ACP_BACKENDS_ALL is defined, so use lazy initialization
   return Object.entries(ACP_BACKENDS_ALL)
     .filter(([id, config]) => {
-      // 排除没有 CLI 命令的后端（gemini 内置，custom 用户配置）
-      // Exclude backends without CLI command (gemini is built-in, custom is user-configured)
+      // 排除没有 CLI 命令的后端（custom 用户配置）
+      // Exclude backends without CLI command (custom is user-configured)
       if (!config.cliCommand) return false;
-      if (id === 'gemini' || id === 'custom') return false;
+      if (id === 'custom') return false;
       return config.enabled;
     })
     .map(([id, config]) => ({
@@ -142,10 +122,10 @@ export const POTENTIAL_ACP_CLIS: PotentialAcpCli[] = new Proxy([] as PotentialAc
 
 /**
  * ACP 后端 Agent 配置
- * 用于内置后端（claude, gemini, qwen）和用户自定义 Agent
+ * 用于内置后端（claude）和用户自定义 Agent
  *
  * Configuration for an ACP backend agent.
- * Used for both built-in backends (claude, gemini, qwen) and custom user agents.
+ * Used for both built-in backends (claude) and custom user agents.
  */
 export interface AcpBackendConfig {
   /** 后端唯一标识符 / Unique identifier for the backend (e.g., 'claude', 'gemini', 'custom') */
@@ -298,146 +278,10 @@ export const ACP_BACKENDS_ALL: Record<AcpBackendAll, AcpBackendConfig> = {
     enabled: true,
     supportsStreaming: false,
   },
-  gemini: {
-    id: 'gemini',
-    name: 'Google CLI',
-    cliCommand: 'gemini',
-    authRequired: true,
-    enabled: false,
-    supportsStreaming: true,
-  },
-  qwen: {
-    id: 'qwen',
-    name: 'Qwen Code',
-    cliCommand: 'qwen',
-    defaultCliPath: 'npx @qwen-code/qwen-code',
-    authRequired: true,
-    enabled: true, // ✅ 已验证支持：Qwen CLI v0.0.10+ 支持 --acp
-    supportsStreaming: true,
-    acpArgs: ['--acp'], // Use --acp instead of deprecated --experimental-acp
-  },
-  iflow: {
-    id: 'iflow',
-    name: 'iFlow CLI',
-    cliCommand: 'iflow',
-    authRequired: true,
-    enabled: true,
-    supportsStreaming: false,
-  },
-  codex: {
-    id: 'codex',
-    name: 'Codex',
-    cliCommand: 'codex', // Detect local codex CLI (codex-acp bridge invokes it)
-    defaultCliPath: `npx ${CODEX_ACP_NPX_PACKAGE}`,
-    authRequired: true, // Needs OPENAI_API_KEY or ChatGPT auth
-    enabled: true, // ✅ Codex via codex-acp ACP bridge
-    supportsStreaming: false,
-    acpArgs: [], // codex-acp is ACP by default, no flag needed
-  },
-  codebuddy: {
-    id: 'codebuddy',
-    name: 'CodeBuddy',
-    cliCommand: 'codebuddy',
-    defaultCliPath: 'npx @tencent-ai/codebuddy-code',
-    authRequired: true,
-    enabled: true, // ✅ Tencent CodeBuddy Code CLI，使用 `codebuddy --acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['--acp'], // codebuddy 使用 --acp flag
-  },
-  goose: {
-    id: 'goose',
-    name: 'Goose',
-    cliCommand: 'goose',
-    authRequired: false,
-    enabled: true, // ✅ Block's Goose CLI，使用 `goose acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['acp'], // goose 使用子命令而非 flag
-  },
-  auggie: {
-    id: 'auggie',
-    name: 'Augment Code',
-    cliCommand: 'auggie',
-    authRequired: false,
-    enabled: true, // ✅ Augment Code CLI，使用 `auggie --acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['--acp'], // auggie 使用 --acp flag
-  },
-  kimi: {
-    id: 'kimi',
-    name: 'Kimi CLI',
-    cliCommand: 'kimi',
-    authRequired: false,
-    enabled: true, // ✅ Kimi CLI (Moonshot)，使用 `kimi acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['acp'], // kimi 使用 acp 子命令
-  },
-  opencode: {
-    id: 'opencode',
-    name: 'OpenCode',
-    cliCommand: 'opencode',
-    authRequired: false,
-    enabled: true, // ✅ OpenCode CLI，使用 `opencode acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['acp'], // opencode 使用 acp 子命令
-  },
-  droid: {
-    id: 'droid',
-    name: 'Factory Droid',
-    cliCommand: 'droid',
-    // Droid uses FACTORY_API_KEY from environment, not an interactive auth flow.
-    authRequired: false,
-    enabled: true, // ✅ Factory docs: `droid exec --output-format acp` (JetBrains/Zed ACP integration)
-    supportsStreaming: false,
-    acpArgs: ['exec', '--output-format', 'acp'],
-  },
-  copilot: {
-    id: 'copilot',
-    name: 'GitHub Copilot',
-    cliCommand: 'copilot',
-    authRequired: false,
-    enabled: true, // ✅ GitHub Copilot CLI，使用 `copilot --acp --stdio` 启动
-    supportsStreaming: false,
-    acpArgs: ['--acp', '--stdio'], // copilot 使用 --acp --stdio 启动 ACP mode
-  },
-  qoder: {
-    id: 'qoder',
-    name: 'Qoder CLI',
-    cliCommand: 'qodercli',
-    authRequired: false,
-    enabled: true, // ✅ Qoder CLI，使用 `qodercli --acp` 启动
-    supportsStreaming: false,
-    acpArgs: ['--acp'], // qoder 使用 --acp flag
-  },
-  vibe: {
-    id: 'vibe',
-    name: 'Mistral Vibe',
-    cliCommand: 'vibe-acp',
-    authRequired: false,
-    enabled: true, // ✅ Mistral Vibe CLI，使用 `vibe-acp` 启动
-    supportsStreaming: false,
-    acpArgs: [],
-  },
-  'openclaw-gateway': {
-    id: 'openclaw-gateway',
-    name: 'OpenClaw',
-    cliCommand: 'openclaw',
-    authRequired: false,
-    enabled: true, // ✅ OpenClaw Gateway WebSocket mode
-    supportsStreaming: true,
-    acpArgs: ['gateway'], // openclaw gateway command (for detection)
-  },
-  nanobot: {
-    id: 'nanobot',
-    name: 'Nano Bot',
-    cliCommand: 'nanobot',
-    authRequired: false,
-    enabled: true,
-    supportsStreaming: false,
-  },
   custom: {
     id: 'custom',
     name: 'Custom Agent',
-    cliCommand: undefined, // User-configured via settings
+    cliCommand: undefined,
     authRequired: false,
     enabled: true,
     supportsStreaming: false,
