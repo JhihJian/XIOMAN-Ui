@@ -1,0 +1,94 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  border-color: rgb(var(--primary-6));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.iconWrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(var(--primary-6), 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconImage {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.titleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.version {
+  font-size: 12px;
+  color: var(--text-4);
+}
+
+.statusTag {
+  flex-shrink: 0;
+  font-size: 11px;
+}
+
+.description {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-3);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionsGroup {
+  display: flex;
+  gap: 8px;
+}
+
+.downloadBtn {
+  min-width: 120px;
+}
