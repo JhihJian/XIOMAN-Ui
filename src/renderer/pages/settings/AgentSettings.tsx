@@ -4,14 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Message } from '@arco-design/web-react';
 import React from 'react';
+import AssistantManagement from './AssistantManagement';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
-import PlatformAgentList from './PlatformAgentList';
 
 const AgentSettings: React.FC = () => {
+  const [agentMessage, agentMessageContext] = Message.useMessage({ maxCount: 10 });
+
   return (
     <SettingsPageWrapper>
-      <PlatformAgentList />
+      {agentMessageContext}
+      <AssistantManagement message={agentMessage} />
     </SettingsPageWrapper>
   );
 };
