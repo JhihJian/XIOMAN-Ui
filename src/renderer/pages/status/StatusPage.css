@@ -1,0 +1,116 @@
+/**
+ * @license
+ * Copyright 2025 AionUi (aionui.com)
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+.status-page {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  overflow: hidden;
+}
+
+.status-page__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 40px;
+  max-width: 480px;
+}
+
+.status-page__icon {
+  margin-bottom: 32px;
+  animation: status-page-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-page-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+.status-page__icon--error {
+  color: #f53f3f;
+}
+
+.status-page__icon--warning {
+  color: #ff7d00;
+}
+
+.status-page__icon svg {
+  font-size: 80px;
+}
+
+.status-page__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1d2129;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.5px;
+}
+
+.status-page__description {
+  font-size: 15px;
+  color: #4e5969;
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+  max-width: 360px;
+}
+
+.status-page__action {
+  min-width: 160px;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.status-page__action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode support */
+body[arco-theme='dark'] .status-page {
+  background: linear-gradient(135deg, #1d2129 0%, #0d1117 100%);
+}
+
+body[arco-theme='dark'] .status-page__title {
+  color: #ffffff;
+}
+
+body[arco-theme='dark'] .status-page__description {
+  color: #86909c;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .status-page__content {
+    padding: 32px 24px;
+  }
+
+  .status-page__icon svg {
+    font-size: 64px;
+  }
+
+  .status-page__title {
+    font-size: 24px;
+  }
+
+  .status-page__description {
+    font-size: 14px;
+  }
+}
