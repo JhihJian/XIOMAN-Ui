@@ -12,6 +12,15 @@ import type { AcpBackend, AcpBackendAll, AcpModelInfo, PresetAgentType } from '.
 import type { SlashCommandItem } from './slash/types';
 import type { IMcpServer, IProvider, TChatConversation, TProviderWithModel } from './storage';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from './types/preview';
+import type {
+  NodeCredential,
+  RegisterRequest,
+  RegisterResponse,
+  AuthCheckResponse,
+  PlatformAgent,
+  PlatformNotification,
+  AgentYamlConfig,
+} from './types/platformTypes';
 import type { UpdateCheckRequest, UpdateCheckResult, UpdateDownloadProgressEvent, UpdateDownloadRequest, UpdateDownloadResult, AutoUpdateStatus } from './updateTypes';
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from './utils/protocolDetector';
 
@@ -569,4 +578,24 @@ export const channel = {
   pairingRequested: bridge.buildEmitter<IChannelPairingRequest>('channel.pairing-requested'),
   pluginStatusChanged: bridge.buildEmitter<{ pluginId: string; status: IChannelPluginStatus }>('channel.plugin-status-changed'),
   userAuthorized: bridge.buildEmitter<IChannelUser>('channel.user-authorized'),
+};
+
+// ==================== Platform API ====================
+
+export const platform = {
+  // Authentication
+  register: bridge.buildProvider<IBridgeResponse<RegisterResponse>, RegisterRequest>('platform.register'),
+  authCheck: bridge.buildProvider<IBridgeResponse<AuthCheckResponse>, void>('platform.auth-check'),
+  getCredentials: bridge.buildProvider<IBridgeResponse<NodeCredential | null>, void>('platform.get-credentials'),
+  saveCredentials: bridge.buildProvider<IBridgeResponse, NodeCredential>('platform.save-credentials'),
+  clearCredentials: bridge.buildProvider<IBridgeResponse, void>('platform.clear-credentials'),
+
+  // Agent Management
+  getAgentList: bridge.buildProvider<IBridgeResponse<PlatformAgent[]>, void>('platform.get-agent-list'),
+  downloadAgent: bridge.buildProvider<IBridgeResponse, { agentId: string }>('platform.download-agent'),
+  getInstalledAgent: bridge.buildProvider<IBridgeResponse<AgentYamlConfig | null>, { agentId: string }>('platform.get-installed-agent'),
+
+  // Notifications
+  getNotifications: bridge.buildProvider<IBridgeResponse<PlatformNotification[]>, void>('platform.get-notifications'),
+  markNotificationRead: bridge.buildProvider<IBridgeResponse, { notificationId: string }>('platform.mark-notification-read'),
 };
