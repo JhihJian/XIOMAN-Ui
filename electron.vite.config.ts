@@ -77,7 +77,10 @@ export default defineConfig(({ mode }) => {
           },
         },
       },
-      define: { 'process.env.env': JSON.stringify(process.env.env) },
+      define: {
+        'process.env.NODE_ENV': JSON.stringify(mode),
+        'process.env.env': JSON.stringify(process.env.env),
+      },
     },
 
     preload: {
@@ -154,6 +157,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       define: {
+        'process.env.NODE_ENV': JSON.stringify(mode),
         'process.env.env': JSON.stringify(process.env.env),
         global: 'globalThis',
       },
