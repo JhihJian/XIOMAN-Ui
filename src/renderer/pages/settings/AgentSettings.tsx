@@ -5,13 +5,13 @@
  */
 
 import React from 'react';
-import AgentModalContent from '@/renderer/components/SettingsModal/contents/AgentModalContent';
 import SettingsPageWrapper from './components/SettingsPageWrapper';
+import PlatformAgentList from './PlatformAgentList';
 
 const AgentSettings: React.FC = () => {
   return (
     <SettingsPageWrapper>
-      <AgentModalContent />
+      <PlatformAgentList />
     </SettingsPageWrapper>
   );
 };

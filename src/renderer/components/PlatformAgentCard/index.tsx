@@ -5,7 +5,7 @@
  */
 
 import { Button, Tag } from '@arco-design/web-react';
-import { Robot, Download, Update, CheckCircle } from '@icon-park/react';
+import { Robot, Download, Refresh, CheckOne } from '@icon-park/react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PlatformAgent } from '@/common/types/platformTypes';
@@ -56,7 +56,7 @@ const PlatformAgentCard: React.FC<PlatformAgentCardProps> = ({ agent, onDownload
       case 'update_available':
         return (
           <div className={styles.actionsGroup}>
-            <Button size='small' icon={<Update size='14' />} loading={downloading} onClick={handleDownload}>
+            <Button size='small' icon={<Refresh size='14' />} loading={downloading} onClick={handleDownload}>
               Update
             </Button>
             <Button type='primary' size='small' onClick={handleNavigateToConversation}>
@@ -66,7 +66,7 @@ const PlatformAgentCard: React.FC<PlatformAgentCardProps> = ({ agent, onDownload
         );
       case 'ready':
         return (
-          <Button type='primary' size='small' icon={<CheckCircle size='14' />} onClick={handleNavigateToConversation}>
+          <Button type='primary' size='small' icon={<CheckOne size='14' />} onClick={handleNavigateToConversation}>
             Enter Conversation
           </Button>
         );
