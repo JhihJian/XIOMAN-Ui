@@ -46,7 +46,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRea
   const handleNavigate = () => {
     if (notification.related_agent_id) {
       void onRead(notification.id);
-      void navigate('/guid', { state: { agentId: notification.related_agent_id } });
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises -- navigate is synchronous
+      navigate('/guid', { state: { agentId: notification.related_agent_id } });
     }
   };
 
@@ -59,7 +60,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRea
       <div className={styles.itemContent}>{notification.content}</div>
       {notification.related_agent_id && (
         <div className={styles.itemFooter}>
-          <button type='button' className={styles.itemAction} onClick={handleNavigate}>
+          <button type='button' className={styles.itemAction} onClick={() => void handleNavigate()}>
             <span>{t('notification.goToConversation', { defaultValue: 'Go to conversation' })}</span>
             <ArrowRight theme='outline' size={14} fill='currentColor' />
           </button>

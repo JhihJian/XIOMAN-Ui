@@ -13,6 +13,7 @@ import { MenuFold, MenuUnfold } from '@icon-park/react';
 import classNames from 'classnames';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { LayoutContext } from './context/LayoutContext';
 import { useDeepLink } from './hooks/useDeepLink';
 import { useDirectorySelection } from './hooks/useDirectorySelection';
@@ -77,6 +78,7 @@ const Layout: React.FC<{
   sider: React.ReactNode;
   onSessionClick?: () => void;
 }> = ({ sider, onSessionClick: _onSessionClick }) => {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [viewportWidth, setViewportWidth] = useState<number>(() => (typeof window === 'undefined' ? 390 : window.innerWidth));
@@ -284,26 +286,9 @@ const Layout: React.FC<{
               className={classNames('flex items-center justify-start py-10px px-16px pl-20px gap-12px layout-sider-header', isMobile && 'layout-sider-header--mobile', {
                 'cursor-pointer group ': collapsed,
               })}
+              onClick={collapsed ? onClick : undefined}
             >
-              <div
-                className={classNames('bg-black shrink-0 size-40px relative rd-0.5rem', {
-                  '!size-24px': collapsed,
-                })}
-                onClick={onClick}
-              >
-                <svg
-                  className={classNames('w-5.5 h-5.5 absolute inset-0 m-auto', {
-                    ' scale-140': !collapsed,
-                  })}
-                  viewBox='0 0 80 80'
-                  fill='none'
-                >
-                  <path key='logo-path-1' d='M40 20 Q38 22 25 40 Q23 42 26 42 L30 42 Q32 40 40 30 Q48 40 50 42 L54 42 Q57 42 55 40 Q42 22 40 20' fill='white'></path>
-                  <circle key='logo-circle' cx='40' cy='46' r='3' fill='white'></circle>
-                  <path key='logo-path-2' d='M18 50 Q40 70 62 50' stroke='white' strokeWidth='3.5' fill='none' strokeLinecap='round'></path>
-                </svg>
-              </div>
-              <div className='flex-1 text-20px text-1 collapsed-hidden font-bold'>AionUi</div>
+              <div className='flex-1 text-20px text-1 collapsed-hidden font-bold'>{t('common.tray.showWindow')}</div>
               {isMobile && !collapsed && (
                 <button type='button' className='app-titlebar__button' onClick={() => setCollapsed(true)} aria-label='Collapse sidebar'>
                   {collapsed ? <MenuUnfold theme='outline' size='18' fill='currentColor' /> : <MenuFold theme='outline' size='18' fill='currentColor' />}

@@ -98,7 +98,7 @@ export const handlePairingShow: ActionHandler = async (context) => {
 
     return createSuccessResponse({
       type: 'text',
-      text: ['🔗 <b>Device Pairing</b>', '', 'Please approve this pairing request in the AionUi app:', '', `<code>${code}</code>`, '', `⏱ Valid for: ${expiresInMinutes} minutes`, '', '<b>Steps:</b>', '1. Open AionUi app', '2. Go to WebUI → Channels', '3. Click "Approve" in pending pairing requests'].join('\n'),
+      text: ['🔗 <b>设备配对</b>', '', '请在 全国一体化智能终端 App 中批准此配对请求：', '', `<code>${code}</code>`, '', `⏱ 有效期：${expiresInMinutes} 分钟`, '', '<b>步骤：</b>', '1. 打开 全国一体化智能终端 App', '2. 进入 WebUI → 渠道', '3. 点击"批准"待处理的配对请求'].join('\n'),
       parseMode: 'HTML',
       replyMarkup: getPairingCodeMarkup(platform, code),
     });
@@ -132,7 +132,7 @@ export const handlePairingRefresh: ActionHandler = async (context) => {
 
     return createSuccessResponse({
       type: 'text',
-      text: ['🔄 <b>New Pairing Code</b>', '', `<code>${code}</code>`, '', `⏱ Valid for: ${expiresInMinutes} minutes`, '', 'Please approve this pairing request in AionUi settings.'].join('\n'),
+      text: ['🔄 <b>新配对码</b>', '', `<code>${code}</code>`, '', `⏱ 有效期：${expiresInMinutes} 分钟`, '', '请在 全国一体化智能终端 设置中批准此配对请求。'].join('\n'),
       parseMode: 'HTML',
       replyMarkup: getPairingCodeMarkup(platform, code),
     });
@@ -166,7 +166,7 @@ export const handlePairingCheck: ActionHandler = async (context) => {
 
     return createSuccessResponse({
       type: 'text',
-      text: ['⏳ <b>Waiting for Approval</b>', '', `Pairing code: <code>${pendingRequest.code}</code>`, `Time remaining: ${expiresInMinutes} minutes`, '', 'Please approve the pairing request in AionUi settings.'].join('\n'),
+      text: ['⏳ <b>等待批准</b>', '', `配对码：<code>${pendingRequest.code}</code>`, `剩余时间：${expiresInMinutes} 分钟`, '', '请在 全国一体化智能终端 设置中批准配对请求。'].join('\n'),
       parseMode: 'HTML',
       replyMarkup: getPairingStatusMarkup(platform, pendingRequest.code),
     });
@@ -185,7 +185,7 @@ export const handlePairingHelp: ActionHandler = async (context) => {
 
   return createSuccessResponse({
     type: 'text',
-    text: ['❓ <b>Pairing Help</b>', '', '<b>What is pairing?</b>', `Pairing links your ${platformName} account with the local AionUi application.`, 'You need to pair before using the AI assistant.', '', '<b>Pairing steps:</b>', '1. Get pairing code (send any message)', '2. Open AionUi app', '3. Go to WebUI → Channels', '4. Click "Approve" in pending requests', '', '<b>FAQ:</b>', '• Pairing code valid for 10 minutes, refresh if expired', '• AionUi app must be running', '• Ensure network connection is stable'].join('\n'),
+    text: ['❓ <b>配对帮助</b>', '', '<b>什么是配对？</b>', `配对将您的 ${platformName} 账号与本地 全国一体化智能终端 应用程序关联。`, '使用 AI 助手前需要先配对。', '', '<b>配对步骤：</b>', '1. 获取配对码（发送任意消息）', '2. 打开 全国一体化智能终端 App', '3. 进入 WebUI → 渠道', '4. 点击"批准"待处理请求', '', '<b>常见问题：</b>', '• 配对码有效期 10 分钟，如过期请刷新', '• 全国一体化智能终端 App 必须处于运行状态', '• 确保网络连接稳定'].join('\n'),
     parseMode: 'HTML',
     replyMarkup: getPairingHelpMarkup(platform),
   });

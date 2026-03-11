@@ -94,26 +94,26 @@ export function createMainMenuCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: 'AionUi Assistant' },
+      title: { tag: 'plain_text', content: '全国一体化智能终端助手' },
       template: 'blue',
     },
     elements: [
       {
         tag: 'markdown',
-        content: 'Welcome! Choose an action below:',
+        content: '欢迎！请选择操作：',
       },
       {
         tag: 'action',
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🆕 New Chat' },
+            text: { tag: 'plain_text', content: '🆕 新聊天' },
             type: 'primary',
             value: { action: 'session.new' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '🔄 Agent' },
+            text: { tag: 'plain_text', content: '🔄 智能体' },
             type: 'default',
             value: { action: 'agent.show' },
           },
@@ -124,13 +124,13 @@ export function createMainMenuCard(): LarkCard {
         actions: [
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '📊 Status' },
+            text: { tag: 'plain_text', content: '📊 状态' },
             type: 'default',
             value: { action: 'session.status' },
           },
           {
             tag: 'button',
-            text: { tag: 'plain_text', content: '❓ Help' },
+            text: { tag: 'plain_text', content: '❓ 帮助' },
             type: 'default',
             value: { action: 'help.show' },
           },
@@ -148,13 +148,13 @@ export function createPairingCard(pairingCode: string): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '🔗 Pairing Required' },
+      title: { tag: 'plain_text', content: '🔗 需要配对' },
       template: 'yellow',
     },
     elements: [
       {
         tag: 'markdown',
-        content: ['Please pair your account with AionUi:', '', `**Pairing Code:** \`${pairingCode}\``, '', '1. Open AionUi settings', '2. Go to Channels → Lark', '3. Enter this pairing code', '', 'Code expires in 10 minutes.'].join('\n'),
+        content: ['请将您的账号与 全国一体化智能终端 配对：', '', `**配对码：** \`${pairingCode}\``, '', '1. 打开 全国一体化智能终端 设置', '2. 进入 渠道 → 飞书', '3. 输入此配对码', '', '代码有效期 10 分钟。'].join('\n'),
       },
       {
         tag: 'action',
@@ -185,13 +185,13 @@ export function createPairingStatusCard(pairingCode: string): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '⏳ Waiting for Approval' },
+      title: { tag: 'plain_text', content: '⏳ 等待批准' },
       template: 'orange',
     },
     elements: [
       {
         tag: 'markdown',
-        content: ['Your pairing request is pending approval.', '', `**Pairing Code:** \`${pairingCode}\``, '', 'Please approve in AionUi settings:', '1. Open AionUi app', '2. Go to WebUI → Channels', '3. Click "Approve" for this code'].join('\n'),
+        content: ['您的配对请求待批准。', '', `**配对码：** \`${pairingCode}\``, '', '请在 全国一体化智能终端 设置中批准：', '1. 打开 全国一体化智能终端 App', '2. 进入 WebUI → 渠道', '3. 点击此代码的"批准"按钮'].join('\n'),
       },
       {
         tag: 'action',
@@ -222,13 +222,13 @@ export function createPairingHelpCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '❓ Pairing Help' },
+      title: { tag: 'plain_text', content: '❓ 配对帮助' },
       template: 'turquoise',
     },
     elements: [
       {
         tag: 'markdown',
-        content: ['**What is pairing?**', 'Pairing links your Lark/Feishu account with the local AionUi application.', 'You need to pair before using the AI assistant.', '', '**How to pair:**', '1. Send any message to this bot', '2. You will receive a pairing code', '3. Open AionUi desktop app', '4. Go to WebUI → Channels → Lark', '5. Click "Approve" for your code', '', '**FAQ:**', '• Pairing code valid for 10 minutes', '• AionUi app must be running', '• One account can only pair once'].join('\n'),
+        content: ['**什么是配对？**', '配对将您的飞书账号与本地 全国一体化智能终端 应用程序关联。', '使用 AI 助手前需要先配对。', '', '**如何配对：**', '1. 向此机器人发送任意消息', '2. 您将收到一个配对码', '3. 打开 全国一体化智能终端 桌面 App', '4. 进入 WebUI → 渠道 → 飞书', '5. 点击您的代码的"批准"按钮', '', '**常见问题：**', '• 配对码有效期 10 分钟', '• 全国一体化智能终端 App 必须处于运行状态', '• 一个账号只能配对一次'].join('\n'),
       },
       {
         tag: 'action',
@@ -361,13 +361,13 @@ export function createHelpCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '❓ AionUi Assistant Help' },
+      title: { tag: 'plain_text', content: '❓ 全国一体化智能终端助手帮助' },
       template: 'turquoise',
     },
     elements: [
       {
         tag: 'markdown',
-        content: ['A remote assistant to interact with AionUi via Lark.', '', '**Common Actions:**', '• 🆕 New Chat - Start a new session', '• 🔄 Agent - Switch AI agent', '• 📊 Status - View current session status', '• ❓ Help - Show this help message', '', 'Send a message to chat with the AI assistant.'].join('\n'),
+        content: ['一个远程助手，可通过飞书与 全国一体化智能终端 进行交互。', '', '**常用操作：**', '• 🆕 新聊天 - 开始新会话', '• 🔄 智能体 - 切换 AI 智能体', '• 📊 状态 - 查看当前会话状态', '• ❓ 帮助 - 显示此帮助消息', '', '发送消息即可与 AI 助手聊天。'].join('\n'),
       },
       {
         tag: 'action',
@@ -438,13 +438,13 @@ export function createPairingGuideCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '🔗 Pairing Guide' },
+      title: { tag: 'plain_text', content: '🔗 配对指南' },
       template: 'orange',
     },
     elements: [
       {
         tag: 'markdown',
-        content: ['**First-time Setup:**', '1. Send any message to the bot', '2. Bot displays pairing code', '3. Approve pairing in AionUi settings', '4. Ready to use after pairing', '', '**Notes:**', '• Pairing code valid for 10 minutes', '• AionUi app must be running', '• One Lark account can only pair once'].join('\n'),
+        content: ['**首次设置：**', '1. 向机器人发送任意消息', '2. 机器人显示配对码', '3. 在 全国一体化智能终端 设置中批准配对', '4. 配对完成后即可使用', '', '**注意事项：**', '• 配对码有效期 10 分钟', '• 全国一体化智能终端 App 必须处于运行状态', '• 一个飞书账号只能配对一次'].join('\n'),
       },
       {
         tag: 'action',
@@ -646,13 +646,13 @@ export function createSettingsCard(): LarkCard {
   return {
     config: { wide_screen_mode: true },
     header: {
-      title: { tag: 'plain_text', content: '⚙️ Settings' },
+      title: { tag: 'plain_text', content: '⚙️ 设置' },
       template: 'grey',
     },
     elements: [
       {
         tag: 'markdown',
-        content: ['Channel settings need to be configured in the AionUi app.', '', 'Open AionUi → WebUI → Channels'].join('\n'),
+        content: ['渠道设置需要在 全国一体化智能终端 App 中配置。', '', '打开 全国一体化智能终端 → WebUI → 渠道'].join('\n'),
       },
       {
         tag: 'action',

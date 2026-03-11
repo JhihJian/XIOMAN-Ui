@@ -316,7 +316,7 @@ const createOrUpdateTray = (): void => {
   try {
     const icon = getTrayIcon();
     tray = new Tray(icon);
-    tray.setToolTip('AionUi');
+    tray.setToolTip(i18n.t('tray.showWindow'));
     tray.setContextMenu(buildTrayContextMenu());
 
     // 双击托盘图标显示窗口（Windows/Linux）/ Double-click tray icon to show window (Windows/Linux)

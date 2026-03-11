@@ -12,15 +12,7 @@ import type { AcpBackend, AcpBackendAll, AcpModelInfo, PresetAgentType } from '.
 import type { SlashCommandItem } from './slash/types';
 import type { IMcpServer, IProvider, TChatConversation, TProviderWithModel } from './storage';
 import type { PreviewHistoryTarget, PreviewSnapshotInfo } from './types/preview';
-import type {
-  NodeCredential,
-  RegisterRequest,
-  RegisterResponse,
-  AuthCheckResponse,
-  PlatformAgent,
-  PlatformNotification,
-  AgentYamlConfig,
-} from './types/platformTypes';
+import type { NodeCredential, RegisterRequest, RegisterResponse, AuthCheckResponse, PlatformAgent, PlatformNotification, AgentYamlConfig } from './types/platformTypes';
 import type { UpdateCheckRequest, UpdateCheckResult, UpdateDownloadProgressEvent, UpdateDownloadRequest, UpdateDownloadResult, AutoUpdateStatus } from './updateTypes';
 import type { ProtocolDetectionRequest, ProtocolDetectionResponse } from './utils/protocolDetector';
 

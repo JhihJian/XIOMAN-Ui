@@ -81,8 +81,8 @@ function btn(label: string, action: string, params?: Record<string, string>): Di
  */
 export function createMainMenuCard(): DingTalkCard {
   return {
-    title: 'AionUi Assistant',
-    text: '### AionUi Assistant\n\nWelcome! Choose an action below:',
+    title: '全国一体化智能终端助手',
+    text: '### 全国一体化智能终端助手\n\n欢迎！请选择操作：',
     btnOrientation: '1',
     btns: [btn('New Chat', 'session.new'), btn('Agent', 'agent.show'), btn('Status', 'session.status'), btn('Help', 'help.show')],
   };
@@ -93,8 +93,8 @@ export function createMainMenuCard(): DingTalkCard {
  */
 export function createPairingCard(pairingCode: string): DingTalkCard {
   return {
-    title: 'Pairing Required',
-    text: ['### Pairing Required', '', 'Please pair your account with AionUi:', '', `**Pairing Code:** \`${pairingCode}\``, '', '1. Open AionUi settings', '2. Go to Channels > DingTalk', '3. Enter this pairing code', '', 'Code expires in 10 minutes.'].join('\n'),
+    title: '需要配对',
+    text: ['### 需要配对', '', '请将您的账号与 全国一体化智能终端 配对：', '', `**配对码：** \`${pairingCode}\``, '', '1. 打开 全国一体化智能终端 设置', '2. 进入 渠道 > 钉钉', '3. 输入此配对码', '', '代码有效期 10 分钟。'].join('\n'),
     btnOrientation: '1',
     btns: [btn('Refresh Code', 'pairing.refresh'), btn('Help', 'pairing.help')],
   };
@@ -105,8 +105,8 @@ export function createPairingCard(pairingCode: string): DingTalkCard {
  */
 export function createPairingStatusCard(pairingCode: string): DingTalkCard {
   return {
-    title: 'Waiting for Approval',
-    text: ['### Waiting for Approval', '', 'Your pairing request is pending approval.', '', `**Pairing Code:** \`${pairingCode}\``, '', 'Please approve in AionUi settings:', '1. Open AionUi app', '2. Go to WebUI > Channels', '3. Click "Approve" for this code'].join('\n'),
+    title: '等待批准',
+    text: ['### 等待批准', '', '您的配对请求待批准。', '', `**配对码：** \`${pairingCode}\``, '', '请在 全国一体化智能终端 设置中批准：', '1. 打开 全国一体化智能终端 App', '2. 进入 WebUI > 渠道', '3. 点击此代码的"批准"按钮'].join('\n'),
     btnOrientation: '1',
     btns: [btn('Check Status', 'pairing.check'), btn('New Code', 'pairing.refresh')],
   };
@@ -117,8 +117,8 @@ export function createPairingStatusCard(pairingCode: string): DingTalkCard {
  */
 export function createPairingHelpCard(): DingTalkCard {
   return {
-    title: 'Pairing Help',
-    text: ['### Pairing Help', '', '**What is pairing?**', 'Pairing links your DingTalk account with the local AionUi application.', 'You need to pair before using the AI assistant.', '', '**How to pair:**', '1. Send any message to this bot', '2. You will receive a pairing code', '3. Open AionUi desktop app', '4. Go to WebUI > Channels > DingTalk', '5. Click "Approve" for your code', '', '**FAQ:**', '- Pairing code valid for 10 minutes', '- AionUi app must be running', '- One account can only pair once'].join('\n'),
+    title: '配对帮助',
+    text: ['### 配对帮助', '', '**什么是配对？**', '配对将您的钉钉账号与本地 全国一体化智能终端 应用程序关联。', '使用 AI 助手前需要先配对。', '', '**如何配对：**', '1. 向此机器人发送任意消息', '2. 您将收到一个配对码', '3. 打开 全国一体化智能终端 桌面 App', '4. 进入 WebUI > 渠道 > 钉钉', '5. 点击您的代码的"批准"按钮', '', '**常见问题：**', '- 配对码有效期 10 分钟', '- 全国一体化智能终端 App 必须处于运行状态', '- 一个账号只能配对一次'].join('\n'),
     btns: [btn('Get Pairing Code', 'pairing.show')],
   };
 }
@@ -171,8 +171,8 @@ export function createSessionStatusCard(session?: { id: string; agentType: Chann
  */
 export function createHelpCard(): DingTalkCard {
   return {
-    title: 'AionUi Assistant Help',
-    text: ['### AionUi Assistant Help', '', 'A remote assistant to interact with AionUi via DingTalk.', '', '**Common Actions:**', '- New Chat - Start a new session', '- Agent - Switch AI agent', '- Status - View current session status', '- Help - Show this help message', '', 'Send a message to chat with the AI assistant.'].join('\n'),
+    title: '全国一体化智能终端助手帮助',
+    text: ['### 全国一体化智能终端助手帮助', '', '一个远程助手，可通过钉钉与 全国一体化智能终端 进行交互。', '', '**常用操作：**', '- 新聊天 - 开始新会话', '- 智能体 - 切换 AI 智能体', '- 状态 - 查看当前会话状态', '- 帮助 - 显示此帮助消息', '', '发送消息即可与 AI 助手聊天。'].join('\n'),
     btnOrientation: '0',
     btns: [btn('Features', 'help.features'), btn('Pairing Guide', 'help.pairing'), btn('Tips', 'help.tips')],
   };
@@ -194,8 +194,8 @@ export function createFeaturesCard(): DingTalkCard {
  */
 export function createPairingGuideCard(): DingTalkCard {
   return {
-    title: 'Pairing Guide',
-    text: ['### Pairing Guide', '', '**First-time Setup:**', '1. Send any message to the bot', '2. Bot displays pairing code', '3. Approve pairing in AionUi settings', '4. Ready to use after pairing', '', '**Notes:**', '- Pairing code valid for 10 minutes', '- AionUi app must be running', '- One DingTalk account can only pair once'].join('\n'),
+    title: '配对指南',
+    text: ['### 配对指南', '', '**首次设置：**', '1. 向机器人发送任意消息', '2. 机器人显示配对码', '3. 在 全国一体化智能终端 设置中批准配对', '4. 配对完成后即可使用', '', '**注意事项：**', '- 配对码有效期 10 分钟', '- 全国一体化智能终端 App 必须处于运行状态', '- 一个钉钉账号只能配对一次'].join('\n'),
     btns: [btn('Back to Help', 'help.show')],
   };
 }
@@ -255,8 +255,8 @@ export function createToolConfirmationCard(callId: string, title: string, descri
  */
 export function createSettingsCard(): DingTalkCard {
   return {
-    title: 'Settings',
-    text: ['### Settings', '', 'Channel settings need to be configured in the AionUi app.', '', 'Open AionUi > WebUI > Channels'].join('\n'),
+    title: '设置',
+    text: ['### 设置', '', '渠道设置需要在 全国一体化智能终端 App 中配置。', '', '打开 全国一体化智能终端 > WebUI > 渠道'].join('\n'),
     btns: [btn('Back', 'help.show')],
   };
 }

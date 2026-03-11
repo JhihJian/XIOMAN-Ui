@@ -265,7 +265,7 @@ export const handleHelpShow: ActionHandler = async (context) => {
   }
   return createSuccessResponse({
     type: 'text',
-    text: ['❓ <b>AionUi Assistant</b>', '', 'A remote assistant to interact with AionUi via Telegram.', '', '<b>Common Actions:</b>', '• 🆕 New Chat - Start a new session', '• 📊 Status - View current session status', '• ❓ Help - Show this help message', '', 'Send a message to chat with the AI assistant.'].join('\n'),
+    text: ['❓ <b>全国一体化智能终端助手</b>', '', '一个远程助手，可通过 Telegram 与 全国一体化智能终端 进行交互。', '', '<b>常用操作：</b>', '• 🆕 新聊天 - 开始新会话', '• 📊 状态 - 查看当前会话状态', '• ❓ 帮助 - 显示此帮助消息', '', '发送消息即可与 AI 助手聊天。'].join('\n'),
     parseMode: 'HTML',
     replyMarkup: createHelpKeyboard(),
   });
@@ -317,7 +317,7 @@ export const handleHelpPairing: ActionHandler = async (context) => {
   }
   return createSuccessResponse({
     type: 'text',
-    text: ['🔗 <b>Pairing Guide</b>', '', '<b>First-time Setup:</b>', '1. Send any message to the bot', '2. Bot displays pairing code', '3. Approve pairing in AionUi settings', '4. Ready to use after pairing', '', '<b>Notes:</b>', '• Pairing code valid for 10 minutes', '• AionUi app must be running', '• One Telegram account can only pair once'].join('\n'),
+    text: ['🔗 <b>配对指南</b>', '', '<b>首次设置：</b>', '1. 向机器人发送任意消息', '2. 机器人显示配对码', '3. 在 全国一体化智能终端 设置中批准配对', '4. 配对完成后即可使用', '', '<b>注意事项：</b>', '• 配对码有效期 10 分钟', '• 全国一体化智能终端 App 必须处于运行状态', '• 一个 Telegram 账号只能配对一次'].join('\n'),
     parseMode: 'HTML',
     replyMarkup: createHelpKeyboard(),
   });
@@ -369,7 +369,7 @@ export const handleSettingsShow: ActionHandler = async (context) => {
   }
   return createSuccessResponse({
     type: 'text',
-    text: ['⚙️ <b>Settings</b>', '', 'Channel settings need to be configured in the AionUi app.', '', 'Open AionUi → WebUI → Channels'].join('\n'),
+    text: ['⚙️ <b>设置</b>', '', '渠道设置需要在 全国一体化智能终端 App 中配置。', '', '打开 全国一体化智能终端 → WebUI → 渠道'].join('\n'),
     parseMode: 'HTML',
     replyMarkup: createMainMenuKeyboard(),
   });
