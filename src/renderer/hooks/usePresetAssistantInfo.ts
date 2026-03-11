@@ -6,7 +6,6 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ASSISTANT_PRESETS } from '@/common/presets/assistantPresets';
 import type { TChatConversation } from '@/common/storage';
 import { ConfigStorage } from '@/common/storage';
 import CoworkLogo from '@/renderer/assets/cowork.svg';
@@ -63,34 +62,6 @@ function resolvePresetId(conversation: TChatConversation): string | null {
 }
 
 /**
- * 根据 preset 构建助手信息
- * Build assistant info from preset
- */
-function buildPresetInfo(presetId: string, locale: string): PresetAssistantInfo | null {
-  const preset = ASSISTANT_PRESETS.find((p) => p.id === presetId);
-  if (!preset) return null;
-
-  const name = preset.nameI18n[locale] || preset.nameI18n['en-US'] || preset.id;
-
-  // avatar 可能是 emoji 或 svg 文件名 / avatar can be emoji or svg filename
-  const avatar = typeof preset.avatar === 'string' ? preset.avatar : '';
-  const isEmoji = avatar ? !avatar.endsWith('.svg') : true;
-  let logo: string;
-
-  if (isEmoji) {
-    logo = avatar || '🤖';
-  } else if (preset.id === 'cowork') {
-    logo = CoworkLogo;
-  } else {
-    // 其他 svg 需要动态导入，暂时使用 emoji fallback
-    // Other svg need dynamic import, use emoji fallback for now
-    logo = '🤖';
-  }
-
-  return { name, logo, isEmoji };
-}
-
-/**
  * 获取预设助手信息的 Hook
  * Hook to get preset assistant info from conversation
  *
@@ -112,16 +83,10 @@ export function usePresetAssistantInfo(conversation: TChatConversation | undefin
     const presetId = resolvePresetId(conversation);
     if (!presetId) return { info: null, isLoading: false };
 
-    // First try to find in built-in presets (synchronous, no loading needed)
-    const builtinInfo = buildPresetInfo(presetId, i18n.language || 'en-US');
-    if (builtinInfo) {
-      return { info: builtinInfo, isLoading: false };
-    }
-
     // Custom agents data still loading — don't fall through to fallback yet
     if (isLoadingCustomAgents) return { info: null as PresetAssistantInfo | null, isLoading: true };
 
-    // If not found in built-in presets, try to find in custom agents
+    // Find agent in custom agents list
     if (customAgents && Array.isArray(customAgents)) {
       const customAgent = customAgents.find((agent) => agent.id === presetId || agent.id === `builtin-${presetId}`);
       if (customAgent) {

@@ -5,7 +5,6 @@
  */
 
 import { ipcBridge } from '@/common';
-import { ASSISTANT_PRESETS } from '@/common/presets/assistantPresets';
 import type { IProvider } from '@/common/storage';
 import { ConfigStorage } from '@/common/storage';
 import type { AcpBackend, AcpBackendConfig, AcpModelInfo, AvailableAgent, EffectiveAgentInfo, PresetAgentType } from '../types';
@@ -416,34 +415,6 @@ export const useGuidAgentSelection = ({ modelList, isGoogleAuth, localeKey }: Us
         });
       } catch (_error) {
         // skills may not exist, this is normal
-      }
-
-      // Fallback for builtin assistants
-      if (customAgentId.startsWith('builtin-')) {
-        const presetId = customAgentId.replace('builtin-', '');
-        const preset = ASSISTANT_PRESETS.find((p) => p.id === presetId);
-        if (preset) {
-          if (!rules && preset.ruleFiles) {
-            try {
-              const ruleFile = preset.ruleFiles[localeKey] || preset.ruleFiles['en-US'];
-              if (ruleFile) {
-                rules = await ipcBridge.fs.readBuiltinRule.invoke({ fileName: ruleFile });
-              }
-            } catch (e) {
-              console.warn(`Failed to load builtin rules for ${customAgentId}:`, e);
-            }
-          }
-          if (!skills && preset.skillFiles) {
-            try {
-              const skillFile = preset.skillFiles[localeKey] || preset.skillFiles['en-US'];
-              if (skillFile) {
-                skills = await ipcBridge.fs.readBuiltinSkill.invoke({ fileName: skillFile });
-              }
-            } catch (_e) {
-              // skills fallback failure is ok
-            }
-          }
-        }
       }
 
       return { rules: rules || agentInfo.context, skills };

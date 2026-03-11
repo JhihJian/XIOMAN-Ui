@@ -1,5 +1,4 @@
 import { ipcBridge } from '@/common';
-import { ASSISTANT_PRESETS } from '@/common/presets/assistantPresets';
 import { ConfigStorage } from '@/common/storage';
 import { resolveLocaleKey } from '@/common/utils';
 import coworkSvg from '@/renderer/assets/cowork.svg';
@@ -20,19 +19,6 @@ interface SkillInfo {
   location: string;
   isCustom: boolean;
 }
-
-// 检查内置助手是否有 skills 配置（defaultEnabledSkills 或 skillFiles）
-// Check if builtin assistant has skills config (defaultEnabledSkills or skillFiles)
-const hasBuiltinSkills = (assistantId: string): boolean => {
-  if (!assistantId.startsWith('builtin-')) return false;
-  const presetId = assistantId.replace('builtin-', '');
-  const preset = ASSISTANT_PRESETS.find((p) => p.id === presetId);
-  if (!preset) return false;
-  // 有 defaultEnabledSkills 或 skillFiles 配置即可
-  const hasDefaultSkills = preset.defaultEnabledSkills && preset.defaultEnabledSkills.length > 0;
-  const hasSkillFiles = preset.skillFiles && Object.keys(preset.skillFiles).length > 0;
-  return hasDefaultSkills || hasSkillFiles;
-};
 
 // 待导入的 Skill / Pending skill to import
 interface PendingSkill {
@@ -169,21 +155,15 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
     [localeKey]
   );
 
-  // Helper function to sort assistants according to ASSISTANT_PRESETS order
-  // 根据 ASSISTANT_PRESETS 顺序排序助手的辅助函数
+  // Helper function to sort assistants by name
+  // 根据名称排序助手的辅助函数
   const sortAssistants = useCallback((agents: AcpBackendConfig[]) => {
-    const presetOrder = ASSISTANT_PRESETS.map((preset) => `builtin-${preset.id}`);
     return agents
       .filter((agent) => agent.isPreset)
       .sort((a, b) => {
-        const indexA = presetOrder.indexOf(a.id);
-        const indexB = presetOrder.indexOf(b.id);
-        if (indexA !== -1 || indexB !== -1) {
-          if (indexA === -1) return 1;
-          if (indexB === -1) return -1;
-          return indexA - indexB;
-        }
-        return 0;
+        const nameA = a.name || a.id;
+        const nameB = b.name || b.id;
+        return nameA.localeCompare(nameB);
       });
   }, []);
 
@@ -249,19 +229,13 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
       setEditContext(context);
       setEditSkills(skills);
 
-      // 对于有 skillFiles 配置的内置助手和所有自定义助手，加载技能列表 / Load skills list for builtin assistants with skillFiles and all custom assistants
-      if (hasBuiltinSkills(assistant.id) || !assistant.isBuiltin) {
-        const skillsList = await ipcBridge.fs.listAvailableSkills.invoke();
-        setAvailableSkills(skillsList);
-        // selectedSkills: 启用的 skills / Enabled skills
-        setSelectedSkills(assistant.enabledSkills || []);
-        // customSkills: 通过 Add Skills 添加的 skills 名称 / Skills added via Add Skills
-        setCustomSkills(assistant.customSkillNames || []);
-      } else {
-        setAvailableSkills([]);
-        setSelectedSkills([]);
-        setCustomSkills([]);
-      }
+      // 对于所有助手，加载技能列表 / Load skills list for all assistants
+      const skillsList = await ipcBridge.fs.listAvailableSkills.invoke();
+      setAvailableSkills(skillsList);
+      // selectedSkills: 启用的 skills / Enabled skills
+      setSelectedSkills(assistant.enabledSkills || []);
+      // customSkills: 通过 Add Skills 添加的 skills 名称 / Skills added via Add Skills
+      setCustomSkills(assistant.customSkillNames || []);
     } catch (error) {
       console.error('Failed to load assistant content:', error);
       setEditContext('');
@@ -689,8 +663,8 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
                 </div>
               </div>
             </div>
-            {/* 创建助手或编辑有 skillFiles 配置的内置助手/自定义助手时显示技能选择 / Show skills selection when creating or editing builtin assistants with skillFiles/custom assistants */}
-            {(isCreating || (activeAssistantId && hasBuiltinSkills(activeAssistantId)) || (activeAssistant && !activeAssistant.isBuiltin)) && (
+            {/* 创建助手或编辑助手时显示技能选择 / Show skills selection when creating or editing assistant */}
+            {(isCreating || activeAssistantId) && (
               <div className='flex-shrink-0 mt-16px'>
                 <div className='flex items-center justify-between mb-12px'>
                   <Typography.Text bold>{t('settings.assistantSkills', { defaultValue: 'Skills' })}</Typography.Text>
