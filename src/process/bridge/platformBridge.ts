@@ -192,8 +192,14 @@ async function installAgentPackage(agentId: string, zipBuffer: Buffer, assistant
     const fileName = entry.entryName;
     // Rule files: {agentId}.{locale}.md or {agentId}-skills.{locale}.md
     if (fileName.endsWith('.md')) {
+      // Security: Prevent path traversal attacks
+      const normalizedPath = path.normalize(fileName);
+      if (normalizedPath.startsWith('..') || path.isAbsolute(normalizedPath)) {
+        console.warn(`[Platform] Skipping suspicious path in zip: ${fileName}`);
+        continue;
+      }
+      const targetPath = path.join(assistantsDir, normalizedPath);
       const content = entry.getData().toString('utf8');
-      const targetPath = path.join(assistantsDir, fileName);
       fs.writeFileSync(targetPath, content, 'utf8');
       console.log(`[Platform] Extracted rule file: ${fileName}`);
     }
