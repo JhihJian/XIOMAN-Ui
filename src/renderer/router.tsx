@@ -1,7 +1,14 @@
+/**
+ * @license
+ * Copyright 2025 AionUi (aionui.com)
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import React from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AppLoader from './components/AppLoader';
 import { useAuth } from './context/AuthContext';
+import { usePlatformAuth } from './context/PlatformAuthContext';
 import Conversation from './pages/conversation';
 import Guid from './pages/guid';
 import About from './pages/settings/About';
@@ -12,7 +19,25 @@ import SystemSettings from './pages/settings/SystemSettings';
 import ToolsSettings from './pages/settings/ToolsSettings';
 import WebuiSettings from './pages/settings/WebuiSettings';
 import LoginPage from './pages/login';
+import AuthGuidePage from './pages/auth/AuthGuidePage';
+import DisabledPage from './pages/status/DisabledPage';
+import OfflinePage from './pages/status/OfflinePage';
 import ComponentsShowcase from './pages/test/ComponentsShowcase';
+
+/**
+ * Platform Auth Guard - Checks platform authentication status
+ * Handles unauthenticated, disabled, and offline states
+ */
+const PlatformAuthGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { status } = usePlatformAuth();
+
+  if (status === 'checking') return <AppLoader />;
+  if (status === 'unauthenticated') return <AuthGuidePage />;
+  if (status === 'disabled') return <DisabledPage />;
+  if (status === 'offline') return <OfflinePage />;
+
+  return <>{children}</>;
+};
 
 const ProtectedLayout: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
   const { status } = useAuth();
@@ -25,7 +50,7 @@ const ProtectedLayout: React.FC<{ layout: React.ReactElement }> = ({ layout }) =
     return <Navigate to='/login' replace />;
   }
 
-  return React.cloneElement(layout);
+  return <PlatformAuthGuard>{React.cloneElement(layout)}</PlatformAuthGuard>;
 };
 
 const PanelRoute: React.FC<{ layout: React.ReactElement }> = ({ layout }) => {
