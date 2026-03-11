@@ -1,11 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
-import { ArrowCircleLeft, ExpandLeft, ExpandRight, MenuFold, MenuUnfold, Plus } from '@icon-park/react';
+import { ArrowCircleLeft, ExpandLeft, ExpandRight, MenuFold, MenuUnfold, Plus, Remind } from '@icon-park/react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Badge } from '@arco-design/web-react';
 
 import { ipcBridge } from '@/common';
 import WindowControls from '../WindowControls';
+import NotificationDrawer from '../NotificationDrawer';
 import { WORKSPACE_STATE_EVENT, dispatchWorkspaceToggleEvent } from '@renderer/utils/workspaceEvents';
 import type { WorkspaceStateDetail } from '@renderer/utils/workspaceEvents';
 import { useLayoutContext } from '@/renderer/context/LayoutContext';
@@ -15,20 +17,14 @@ interface TitlebarProps {
   workspaceAvailable: boolean;
 }
 
-const AionLogoMark: React.FC = () => (
-  <svg className='app-titlebar__brand-logo' viewBox='0 0 80 80' fill='none' aria-hidden='true' focusable='false'>
-    <path d='M40 20 Q38 22 25 40 Q23 42 26 42 L30 42 Q32 40 40 30 Q48 40 50 42 L54 42 Q57 42 55 40 Q42 22 40 20' fill='currentColor'></path>
-    <circle cx='40' cy='46' r='3' fill='currentColor'></circle>
-    <path d='M18 50 Q40 70 62 50' stroke='currentColor' strokeWidth='3.5' fill='none' strokeLinecap='round'></path>
-  </svg>
-);
-
 const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
   const { t } = useTranslation();
-  const appTitle = useMemo(() => 'AionUi', []);
+  const appTitle = useMemo(() => t('common.tray.showWindow'), [t]);
   const [workspaceCollapsed, setWorkspaceCollapsed] = useState(true);
   const [mobileCenterTitle, setMobileCenterTitle] = useState(appTitle);
   const [mobileCenterOffset, setMobileCenterOffset] = useState(0);
+  const [notificationVisible, setNotificationVisible] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const layout = useLayoutContext();
   const location = useLocation();
   const navigate = useNavigate();
@@ -175,6 +171,33 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
     return () => observer.disconnect();
   }, [layout?.isMobile, showBackToChatButton, showNewConversationButton, showWorkspaceButton, mobileCenterTitle]);
 
+  // Fetch unread notification count on desktop / 在桌面端获取未读通知数量
+  const fetchUnreadCount = useCallback(async () => {
+    if (!isDesktopRuntime || isMacRuntime) return;
+    try {
+      const response = await ipcBridge.platform.getNotifications.invoke();
+      if (response.success && response.data) {
+        const count = response.data.filter((n) => !n.read).length;
+        setUnreadCount(count);
+      }
+    } catch {
+      // ignore
+    }
+  }, [isDesktopRuntime, isMacRuntime]);
+
+  useEffect(() => {
+    if (!isDesktopRuntime || isMacRuntime) return;
+    void fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000); // Poll every 30 seconds
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount, isDesktopRuntime, isMacRuntime]);
+
+  // Refresh unread count when notification drawer closes / 关闭通知抽屉时刷新未读数
+  const handleNotificationClose = useCallback(() => {
+    setNotificationVisible(false);
+    void fetchUnreadCount();
+  }, [fetchUnreadCount]);
+
   const mobileCenterStyle = layout?.isMobile
     ? ({
         '--app-titlebar-mobile-center-offset': `${workspaceAvailable ? mobileCenterOffset : 0}px`,
@@ -217,7 +240,6 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
       <div className='app-titlebar__brand' aria-label={layout?.isMobile ? mobileCenterTitle : appTitle} title={layout?.isMobile ? mobileCenterTitle : appTitle}>
         {layout?.isMobile ? (
           <span className='app-titlebar__brand-mobile'>
-            <AionLogoMark />
             <span className='app-titlebar__brand-text'>{mobileCenterTitle}</span>
           </span>
         ) : (
@@ -235,8 +257,16 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
             {workspaceCollapsed ? <ExpandRight theme='outline' size={iconSize} fill='currentColor' /> : <ExpandLeft theme='outline' size={iconSize} fill='currentColor' />}
           </button>
         )}
+        {showWindowControls && (
+          <button type='button' className='app-titlebar__button' onClick={() => setNotificationVisible(true)} aria-label={t('notification.title', { defaultValue: 'Notifications' })}>
+            <Badge count={unreadCount} dot={unreadCount > 0}>
+              <Remind theme='outline' size={18} fill='currentColor' />
+            </Badge>
+          </button>
+        )}
         {showWindowControls && <WindowControls />}
       </div>
+      <NotificationDrawer visible={notificationVisible} onClose={handleNotificationClose} />
     </div>
   );
 };
