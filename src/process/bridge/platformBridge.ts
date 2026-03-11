@@ -223,6 +223,6 @@ export function initPlatformBridge(): void {
     const result = await fetchApi<void>(`/api/nodes/notifications/${notificationId}/read`, {
       method: 'PUT',
     });
-    return result;
+    return { success: result.success, msg: result.message };
   });
 }
