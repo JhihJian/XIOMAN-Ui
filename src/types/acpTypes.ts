@@ -249,6 +249,12 @@ export interface AcpBackendConfig {
   /** 是否为内置助手（不可编辑/删除）/ Whether this is a built-in assistant (cannot be edited/deleted) */
   isBuiltin?: boolean;
 
+  /** 平台版本号 / Platform version */
+  platformVersion?: string;
+
+  /** 安装时间 / Installation timestamp */
+  installedAt?: string;
+
   /**
    * 此助手启用的 skills 列表（仅 isPreset=true 时生效）
    * 如果未指定或为空数组，将加载所有可用 skills
