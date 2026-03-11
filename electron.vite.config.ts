@@ -116,7 +116,17 @@ export default defineConfig(({ mode }) => {
         extensions: ['.ts', '.tsx', '.js', '.jsx', '.css'],
         dedupe: ['react', 'react-dom', 'react-router-dom'],
       },
-      plugins: [UnoCSS(unoConfig), iconParkPlugin()],
+      plugins: [
+        UnoCSS(unoConfig),
+        iconParkPlugin(),
+        ...(!isDevelopment
+          ? [
+              viteStaticCopy({
+                targets: [{ src: 'src/renderer/public/mockServiceWorker.js', dest: '.' }],
+              }),
+            ]
+          : []),
+      ],
       build: {
         target: 'es2022',
         sourcemap: isDevelopment,

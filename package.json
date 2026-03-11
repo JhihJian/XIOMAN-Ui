@@ -221,7 +221,7 @@
   },
   "msw": {
     "workerDirectory": [
-      "src\\renderer\\public"
+      "src/renderer/public"
     ]
   }
 }
