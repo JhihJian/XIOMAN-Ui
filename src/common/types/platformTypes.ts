@@ -9,6 +9,8 @@
  * Platform-related type definitions
  */
 
+import type { AcpBackendConfig } from '@/types/acpTypes';
+
 // 节点认证凭证 / Node authentication credential
 export interface NodeCredential {
   token: string;
@@ -33,19 +35,22 @@ export interface AuthCheckResponse {
   message?: string;
 }
 
-// 平台 Agent 信息 / Platform Agent information
-export interface PlatformAgent {
-  agent_id: string;
-  name: string;
-  description: string;
-  version: string;
-  icon?: string;
-  download_url: string;
-  remote_updated_at: string;
-  local_installed_at?: string;
-  local_version?: string;
-  status: 'ready' | 'update_available' | 'not_installed';
-}
+/** 平台助手配置（直接复用 AcpBackendConfig）/ Platform Agent configuration (reuses AcpBackendConfig) */
+export type PlatformAgentConfig = AcpBackendConfig & {
+  /** 安装状态 / Installation status */
+  status: 'installed' | 'update_available' | 'not_installed';
+
+  /** 下载地址 / Download URL */
+  downloadUrl: string;
+};
+
+/** 平台助手列表响应 / Platform agent list response */
+export type PlatformAgentListResponse = PlatformAgentConfig[];
+
+/**
+ * @deprecated Use `PlatformAgentConfig` instead. This type is kept for backward compatibility.
+ */
+export type PlatformAgent = PlatformAgentConfig;
 
 // 通知 / Platform notification
 export interface PlatformNotification {

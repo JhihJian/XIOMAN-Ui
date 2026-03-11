@@ -8,17 +8,17 @@ import { Button, Tag } from '@arco-design/web-react';
 import { Robot, Download, Refresh, CheckOne } from '@icon-park/react';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { PlatformAgent } from '@/common/types/platformTypes';
+import type { PlatformAgentConfig } from '@/common/types/platformTypes';
 import styles from './index.module.css';
 
 type PlatformAgentCardProps = {
-  agent: PlatformAgent;
+  agent: PlatformAgentConfig;
   onDownload?: (agentId: string) => void;
   downloading?: boolean;
 };
 
 const statusConfig = {
-  ready: {
+  installed: {
     color: 'green',
     label: 'Ready',
   },
@@ -36,11 +36,11 @@ const PlatformAgentCard: React.FC<PlatformAgentCardProps> = ({ agent, onDownload
   const navigate = useNavigate();
 
   const handleNavigateToConversation = () => {
-    void navigate('/guid', { state: { agentId: agent.agent_id } });
+    void navigate('/guid', { state: { agentId: agent.id } });
   };
 
   const handleDownload = () => {
-    onDownload?.(agent.agent_id);
+    onDownload?.(agent.id);
   };
 
   const statusInfo = statusConfig[agent.status];
@@ -64,7 +64,7 @@ const PlatformAgentCard: React.FC<PlatformAgentCardProps> = ({ agent, onDownload
             </Button>
           </div>
         );
-      case 'ready':
+      case 'installed':
         return (
           <Button type='primary' size='small' icon={<CheckOne size='14' />} onClick={handleNavigateToConversation}>
             Enter Conversation
@@ -79,10 +79,10 @@ const PlatformAgentCard: React.FC<PlatformAgentCardProps> = ({ agent, onDownload
     <div className={styles.card}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <div className={styles.iconWrapper}>{agent.icon ? <img src={agent.icon} alt={agent.name} className={styles.iconImage} /> : <Robot size='24' fill='rgb(var(--primary-6))' />}</div>
+          <div className={styles.iconWrapper}>{agent.avatar ? <img src={agent.avatar} alt={agent.name} className={styles.iconImage} /> : <Robot size='24' fill='rgb(var(--primary-6))' />}</div>
           <div className={styles.titleSection}>
             <div className={styles.name}>{agent.name}</div>
-            <div className={styles.version}>v{agent.version}</div>
+            <div className={styles.version}>v{agent.platformVersion}</div>
           </div>
         </div>
         <Tag color={statusInfo.color} className={styles.statusTag}>

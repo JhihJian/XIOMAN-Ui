@@ -9,7 +9,7 @@
  * Used by MSW handlers for development and testing
  */
 
-import type { PlatformAgent, PlatformNotification, RegisterResponse } from '@/common/types/platformTypes';
+import type { PlatformAgentConfig, PlatformNotification, RegisterResponse } from '@/common/types/platformTypes';
 
 /**
  * Mock authorization code for development
@@ -19,39 +19,34 @@ export const MOCK_AUTH_CODE = 'DEMO-2026';
 /**
  * Mock platform agents
  */
-export const mockAgents: PlatformAgent[] = [
+export const mockAgents: PlatformAgentConfig[] = [
   {
-    agent_id: 'platform-docking',
+    id: 'platform-docking',
     name: '全国平台对接助手',
     description: '负责与全国安全生产信息平台进行数据对接，自动同步企业信息、人员信息和安全生产数据。',
-    version: '1.2.0',
-    icon: 'platform-docking.png',
-    download_url: 'https://example.com/agents/platform-docking-1.2.0.zip',
-    remote_updated_at: '2026-03-01T10:00:00Z',
-    local_installed_at: '2026-03-05T14:30:00Z',
-    local_version: '1.2.0',
-    status: 'ready',
+    platformVersion: '1.2.0',
+    avatar: 'platform-docking.png',
+    downloadUrl: 'https://example.com/agents/platform-docking-1.2.0.zip',
+    installedAt: '2026-03-05T14:30:00Z',
+    status: 'installed',
   },
   {
-    agent_id: 'hazard-reporting',
+    id: 'hazard-reporting',
     name: '问题隐患整改信息上报助手',
     description: '用于上报问题隐患的整改情况，包括隐患描述、整改措施、整改进度和完成状态等信息。',
-    version: '2.0.0',
-    icon: 'hazard-reporting.png',
-    download_url: 'https://example.com/agents/hazard-reporting-2.0.0.zip',
-    remote_updated_at: '2026-03-08T09:00:00Z',
-    local_installed_at: '2026-02-20T11:00:00Z',
-    local_version: '1.8.0',
+    platformVersion: '2.0.0',
+    avatar: 'hazard-reporting.png',
+    downloadUrl: 'https://example.com/agents/hazard-reporting-2.0.0.zip',
+    installedAt: '2026-02-20T11:00:00Z',
     status: 'update_available',
   },
   {
-    agent_id: 'inspection-reporting',
+    id: 'inspection-reporting',
     name: '落查任务结果信息上报助手',
     description: '用于上报落查任务的结果信息，包括任务完成情况、检查结果、发现的问题及处理建议等。',
-    version: '1.0.0',
-    icon: 'inspection-reporting.png',
-    download_url: 'https://example.com/agents/inspection-reporting-1.0.0.zip',
-    remote_updated_at: '2026-03-10T08:00:00Z',
+    platformVersion: '1.0.0',
+    avatar: 'inspection-reporting.png',
+    downloadUrl: 'https://example.com/agents/inspection-reporting-1.0.0.zip',
     status: 'not_installed',
   },
 ];

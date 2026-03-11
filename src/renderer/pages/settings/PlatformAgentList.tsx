@@ -8,11 +8,11 @@ import { Button, Spin, Empty, Message } from '@arco-design/web-react';
 import { Refresh } from '@icon-park/react';
 import React, { useState, useCallback, useEffect } from 'react';
 import { ipcBridge } from '@/common';
-import type { PlatformAgent } from '@/common/types/platformTypes';
+import type { PlatformAgentConfig } from '@/common/types/platformTypes';
 import PlatformAgentCard from '@/renderer/components/PlatformAgentCard';
 
 const PlatformAgentList: React.FC = () => {
-  const [agents, setAgents] = useState<PlatformAgent[]>([]);
+  const [agents, setAgents] = useState<PlatformAgentConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
@@ -79,7 +79,7 @@ const PlatformAgentList: React.FC = () => {
       ) : (
         <div className='grid gap-16px grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
           {agents.map((agent) => (
-            <PlatformAgentCard key={agent.agent_id} agent={agent} onDownload={handleDownload} downloading={downloadingId === agent.agent_id} />
+            <PlatformAgentCard key={agent.id} agent={agent} onDownload={handleDownload} downloading={downloadingId === agent.id} />
           ))}
         </div>
       )}
