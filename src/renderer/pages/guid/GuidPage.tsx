@@ -24,7 +24,7 @@ import { useGuidModelSelection } from './hooks/useGuidModelSelection';
 import { useGuidSend } from './hooks/useGuidSend';
 import { useTypewriterPlaceholder } from './hooks/useTypewriterPlaceholder';
 import { ConfigProvider } from '@arco-design/web-react';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './index.module.css';
@@ -209,6 +209,20 @@ const GuidPage: React.FC = () => {
     },
     [agentSelection.setSelectedAgentKey, mention.setMentionOpen, mention.setMentionQuery, mention.setMentionSelectorOpen, mention.setMentionActiveIndex]
   );
+
+  // Handle agentId from location state (from notifications or Agent list)
+  useEffect(() => {
+    const state = location.state as { agentId?: string } | null;
+    if (state?.agentId) {
+      // Check if the agentId exists in available list
+      const agentExists = agentSelection.availableAgents?.some((a) => agentSelection.getAgentKey(a) === state.agentId);
+      if (agentExists) {
+        agentSelection.setSelectedAgentKey(state.agentId);
+      }
+      // Clear state to avoid re-triggering
+      window.history.replaceState({}, '');
+    }
+  }, [location.state, agentSelection]);
 
   // Typewriter placeholder
   const typewriterPlaceholder = useTypewriterPlaceholder(t('conversation.welcome.placeholder'));
