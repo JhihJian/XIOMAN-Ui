@@ -10,11 +10,15 @@
  */
 
 import { ipcBridge } from '@/common';
+import { ConfigStorage } from '@/common/storage';
 import type { NodeCredential, RegisterResponse, AuthCheckResponse, PlatformAgentConfig, PlatformNotification, AgentYamlConfig } from '@/common/types/platformTypes';
+import type { AcpBackendConfig } from '@/types/acpTypes';
 import { PLATFORM_CONFIG } from '@/common/config/platformConfig';
+import { getAssistantsDir } from '../initStorage';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { app } from 'electron';
+import AdmZip from 'adm-zip';
 
 // Dev mode mock configuration
 const IS_DEV = process.env.NODE_ENV === 'development';
@@ -169,6 +173,33 @@ async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise
   }
 }
 
+/**
+ * Install agent package by extracting zip and writing rule files to assistants directory
+ * 解压 zip 并写入规则文件到 assistants 目录
+ */
+async function installAgentPackage(agentId: string, zipBuffer: Buffer, assistantsDir: string): Promise<void> {
+  const zip = new AdmZip(zipBuffer);
+  const zipEntries = zip.getEntries();
+
+  // Ensure assistants directory exists
+  if (!fs.existsSync(assistantsDir)) {
+    fs.mkdirSync(assistantsDir, { recursive: true });
+  }
+
+  for (const entry of zipEntries) {
+    if (entry.isDirectory) continue;
+
+    const fileName = entry.entryName;
+    // Rule files: {agentId}.{locale}.md or {agentId}-skills.{locale}.md
+    if (fileName.endsWith('.md')) {
+      const content = entry.getData().toString('utf8');
+      const targetPath = path.join(assistantsDir, fileName);
+      fs.writeFileSync(targetPath, content, 'utf8');
+      console.log(`[Platform] Extracted rule file: ${fileName}`);
+    }
+  }
+}
+
 export function initPlatformBridge(): void {
   // Node registration
   ipcBridge.platform.register.provider(async ({ auth_code }) => {
@@ -259,32 +290,88 @@ export function initPlatformBridge(): void {
     return result;
   });
 
-  // Download and save agent package
+  // Download and install agent package
   ipcBridge.platform.downloadAgent.provider(async ({ agentId }) => {
     try {
-      const response = await fetch(`${PLATFORM_CONFIG.serverUrl}/api/agents/${agentId}/package`, {
+      // Use mock in dev mode
+      if (IS_DEV) {
+        console.log('[Platform] Using mock for download agent:', agentId);
+
+        // In dev mode, simulate successful installation
+        const agentConfig = mockAgents.find((a) => a.id === agentId);
+        if (!agentConfig) {
+          return { success: false, msg: 'Agent not found' };
+        }
+
+        // Save config to acp.customAgents
+        const existingAgents = (await ConfigStorage.get('acp.customAgents')) || [];
+        const agentToSave: AcpBackendConfig = {
+          id: agentConfig.id,
+          name: agentConfig.name,
+          description: agentConfig.description,
+          avatar: agentConfig.avatar,
+          platformVersion: agentConfig.platformVersion,
+          isPreset: true,
+          installedAt: new Date().toISOString(),
+        };
+
+        const existingIndex = existingAgents.findIndex((a: AcpBackendConfig) => a.id === agentId);
+        if (existingIndex >= 0) {
+          existingAgents[existingIndex] = { ...existingAgents[existingIndex], ...agentToSave };
+        } else {
+          existingAgents.push(agentToSave);
+        }
+
+        await ConfigStorage.set('acp.customAgents', existingAgents);
+        console.log('[Platform] Mock agent installed:', agentId);
+        return { success: true };
+      }
+
+      // 1. Get agent config from platform API
+      const agentsResult = await fetchApi<PlatformAgentConfig[]>('/api/nodes/agents');
+      if (!agentsResult.success || !agentsResult.data) {
+        return { success: false, msg: 'Failed to fetch agent config' };
+      }
+
+      const agentConfig = agentsResult.data.find((a) => a.id === agentId);
+      if (!agentConfig || !agentConfig.downloadUrl) {
+        return { success: false, msg: 'Agent not found or no download URL' };
+      }
+
+      // 2. Download zip package
+      const response = await fetch(agentConfig.downloadUrl, {
         headers: buildAuthHeaders(),
       });
-
       if (!response.ok) {
         return { success: false, msg: 'Download failed' };
       }
 
-      // Save agent package to local storage
-      const buffer = await response.arrayBuffer();
-      const agentsPath = getAgentStoragePath();
-      const agentPath = path.join(agentsPath, agentId);
+      const zipBuffer = Buffer.from(await response.arrayBuffer());
 
-      // Ensure directory exists
-      if (!fs.existsSync(agentPath)) {
-        fs.mkdirSync(agentPath, { recursive: true });
+      // 3. Extract and write rule files to assistants directory
+      const assistantsDir = getAssistantsDir();
+      await installAgentPackage(agentId, zipBuffer, assistantsDir);
+
+      // 4. Save config to acp.customAgents
+      const existingAgents = (await ConfigStorage.get('acp.customAgents')) || [];
+      const agentToSave: AcpBackendConfig = {
+        ...agentConfig,
+        isPreset: true,
+        installedAt: new Date().toISOString(),
+      };
+      // Remove runtime-only fields
+      delete (agentToSave as PlatformAgentConfig).status;
+      delete (agentToSave as PlatformAgentConfig).downloadUrl;
+
+      const existingIndex = existingAgents.findIndex((a: AcpBackendConfig) => a.id === agentId);
+      if (existingIndex >= 0) {
+        existingAgents[existingIndex] = { ...existingAgents[existingIndex], ...agentToSave };
+      } else {
+        existingAgents.push(agentToSave);
       }
 
-      // Save zip file
-      const zipPath = path.join(agentPath, 'package.zip');
-      fs.writeFileSync(zipPath, Buffer.from(buffer));
-
-      // TODO: Extract and parse agent.yaml
+      await ConfigStorage.set('acp.customAgents', existingAgents);
+      console.log('[Platform] Agent installed successfully:', agentId);
 
       return { success: true };
     } catch (error) {
