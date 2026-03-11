@@ -214,10 +214,21 @@ const GuidPage: React.FC = () => {
   useEffect(() => {
     const state = location.state as { agentId?: string } | null;
     if (state?.agentId) {
+      const rawAgentId = state.agentId;
       // Check if the agentId exists in available list
-      const agentExists = agentSelection.availableAgents?.some((a) => agentSelection.getAgentKey(a) === state.agentId);
+      // Support both formats: "cowork" and "custom:cowork" for platform agents
+      const agentExists = agentSelection.availableAgents?.some((a) => {
+        const key = agentSelection.getAgentKey(a);
+        return key === rawAgentId || (a.backend === 'custom' && a.customAgentId === rawAgentId);
+      });
       if (agentExists) {
-        agentSelection.setSelectedAgentKey(state.agentId);
+        // Normalize the key: if rawAgentId is "cowork" and agent has customAgentId, use "custom:cowork"
+        const normalizedKey = agentSelection.availableAgents?.find((a) => {
+          const key = agentSelection.getAgentKey(a);
+          return key === rawAgentId || (a.backend === 'custom' && a.customAgentId === rawAgentId);
+        });
+        const finalKey = normalizedKey ? agentSelection.getAgentKey(normalizedKey) : rawAgentId;
+        agentSelection.setSelectedAgentKey(finalKey);
       }
       // Clear state to avoid re-triggering
       window.history.replaceState({}, '');

@@ -7,7 +7,7 @@
 import type { PlatformNotification } from '@/common/types/platformTypes';
 import { ipcBridge } from '@/common';
 import { Drawer, Button, Message } from '@arco-design/web-react';
-import { Bell, CheckOne } from '@icon-park/react';
+import { Remind, CheckOne } from '@icon-park/react';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import NotificationItem from './NotificationItem';
@@ -81,7 +81,7 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ visible, onClos
       width={400}
       title={
         <div className={styles.headerTitle}>
-          <Bell theme='outline' size={18} fill='currentColor' />
+          <Remind theme='outline' size={18} fill='currentColor' />
           <span>{t('notification.title', { defaultValue: 'Notifications' })}</span>
           {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
         </div>
@@ -109,7 +109,7 @@ const NotificationDrawer: React.FC<NotificationDrawerProps> = ({ visible, onClos
         </div>
       ) : notifications.length === 0 ? (
         <div className={styles.emptyState}>
-          <Bell theme='outline' size={48} strokeWidth={1.5} fill='currentColor' className={styles.emptyIcon} />
+          <Remind theme='outline' size={48} strokeWidth={1.5} fill='currentColor' className={styles.emptyIcon} />
           <div className={styles.emptyText}>{t('notification.empty', { defaultValue: 'No notifications' })}</div>
         </div>
       ) : (

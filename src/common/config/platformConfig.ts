@@ -13,7 +13,8 @@
 
 export const PLATFORM_CONFIG = {
   // 中心平台地址，可通过环境变量覆盖
-  serverUrl: process.env.PLATFORM_URL || 'https://platform.example.com',
+  // 在 dev 模式下使用空字符串以启用 MSW mock
+  serverUrl: process.env.PLATFORM_URL || (process.env.NODE_ENV === 'development' ? '' : 'https://platform.example.com'),
 
   // 通知轮询间隔（毫秒）
   notificationPollInterval: 5 * 60 * 1000, // 5 分钟

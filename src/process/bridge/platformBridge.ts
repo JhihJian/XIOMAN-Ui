@@ -284,15 +284,46 @@ export function initPlatformBridge(): void {
     return { success: true };
   });
 
-  // Get agent list from platform
+  // Get agent list from platform with local installation status
   ipcBridge.platform.getAgentList.provider(async () => {
+    // Get local installed agents
+    const localAgents = (await ConfigStorage.get('acp.customAgents')) || [];
+    const localAgentMap = new Map<string, AcpBackendConfig>();
+    for (const agent of localAgents) {
+      if (agent.id) {
+        localAgentMap.set(agent.id, agent);
+      }
+    }
+
+    // Helper to determine installation status
+    const getInstallStatus = (platformAgent: { id: string; platformVersion?: string }): 'installed' | 'update_available' | 'not_installed' => {
+      const local = localAgentMap.get(platformAgent.id);
+      if (!local) return 'not_installed';
+      if (local.platformVersion && platformAgent.platformVersion && local.platformVersion !== platformAgent.platformVersion) {
+        return 'update_available';
+      }
+      return 'installed';
+    };
+
     // Use mock in dev mode
     if (IS_DEV) {
       console.log('[Platform] Using mock data for agent list');
-      return { success: true, data: mockAgents };
+      const mergedAgents: PlatformAgentConfig[] = mockAgents.map((agent) => ({
+        ...agent,
+        status: getInstallStatus(agent),
+      }));
+      return { success: true, data: mergedAgents };
     }
 
+    // Production: fetch from API and merge with local status
     const result = await fetchApi<PlatformAgentConfig[]>('/api/nodes/agents');
+    if (result.success && result.data) {
+      const mergedAgents: PlatformAgentConfig[] = result.data.map((agent) => ({
+        ...agent,
+        status: getInstallStatus(agent),
+      }));
+      return { success: true, data: mergedAgents };
+    }
     return result;
   });
 
@@ -439,5 +470,33 @@ export function initPlatformBridge(): void {
       method: 'PUT',
     });
     return { success: result.success, msg: result.msg };
+  });
+
+  // Uninstall agent
+  ipcBridge.platform.uninstallAgent.provider(async ({ agentId }) => {
+    try {
+      // 1. Remove from acp.customAgents
+      const existingAgents = (await ConfigStorage.get('acp.customAgents')) || [];
+      const filteredAgents = existingAgents.filter((a: AcpBackendConfig) => a.id !== agentId);
+      await ConfigStorage.set('acp.customAgents', filteredAgents);
+
+      // 2. Delete rule files
+      const assistantsDir = getAssistantsDir();
+      if (fs.existsSync(assistantsDir)) {
+        const files = fs.readdirSync(assistantsDir);
+        for (const file of files) {
+          if (file.startsWith(`${agentId}.`) || file.startsWith(`${agentId}-skills.`)) {
+            fs.unlinkSync(path.join(assistantsDir, file));
+            console.log(`[Platform] Deleted rule file: ${file}`);
+          }
+        }
+      }
+
+      console.log(`[Platform] Agent uninstalled: ${agentId}`);
+      return { success: true };
+    } catch (error) {
+      console.error('[Platform] Uninstall agent error:', error);
+      return { success: false, msg: error instanceof Error ? error.message : 'Uninstall failed' };
+    }
   });
 }
