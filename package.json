@@ -1,6 +1,6 @@
 {
-  "name": "AionUi",
-  "productName": "AionUi",
+  "name": "xionman-ui",
+  "productName": "全国一体化智能终端",
   "version": "1.8.23",
   "description": "Transform your command-line AI agent into a modern, efficient AI Chat interface.",
   "main": "./out/main/index.js",
@@ -51,7 +51,7 @@
   },
   "keywords": [],
   "author": {
-    "name": "AionUi",
+    "name": "全国一体化智能终端",
     "email": "service@aionui.com"
   },
   "license": "Apache-2.0",
@@ -90,6 +90,7 @@
     "jest-diff": "^30.0.4",
     "jsdom": "^28.1.0",
     "lint-staged": "^16.2.7",
+    "msw": "^2.12.10",
     "patch-package": "^8.0.0",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
@@ -217,5 +218,10 @@
   },
   "patchedDependencies": {
     "7zip-bin@5.2.0": "patches/7zip-bin@5.2.0.patch"
+  },
+  "msw": {
+    "workerDirectory": [
+      "src\\renderer\\public"
+    ]
   }
 }
