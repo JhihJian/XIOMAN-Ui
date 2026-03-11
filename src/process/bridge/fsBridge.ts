@@ -695,26 +695,6 @@ export function initFsBridge(): void {
     }
   });
 
-  // 读取内置 rules 文件 / Read built-in rules file from app resources
-  ipcBridge.fs.readBuiltinRule.provider(async ({ fileName }) => {
-    try {
-      return await readBuiltinResource('rules', fileName);
-    } catch (error) {
-      console.error('Failed to read builtin rule:', error);
-      throw error;
-    }
-  });
-
-  // 读取内置 skills 文件 / Read built-in skills file from app resources
-  ipcBridge.fs.readBuiltinSkill.provider(async ({ fileName }) => {
-    try {
-      return await readBuiltinResource('skills', fileName);
-    } catch (error) {
-      console.error('Failed to read builtin skill:', error);
-      throw error;
-    }
-  });
-
   // 读取助手规则文件 / Read assistant rule file from user directory or builtin rules
   ipcBridge.fs.readAssistantRule.provider(async ({ assistantId, locale = 'en-US' }) => {
     try {

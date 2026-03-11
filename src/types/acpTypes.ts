@@ -246,9 +246,6 @@ export interface AcpBackendConfig {
    */
   models?: string[];
 
-  /** 是否为内置助手（不可编辑/删除）/ Whether this is a built-in assistant (cannot be edited/deleted) */
-  isBuiltin?: boolean;
-
   /** 平台版本号 / Platform version */
   platformVersion?: string;
 
