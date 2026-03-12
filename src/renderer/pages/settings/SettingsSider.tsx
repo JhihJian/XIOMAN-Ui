@@ -1,6 +1,5 @@
 import FlexFullContainer from '@/renderer/components/FlexFullContainer';
-import { isElectronDesktop } from '@/renderer/utils/platform';
-import { Communication, Computer, Earth, Info, LinkCloud, Robot, System, Toolkit } from '@icon-park/react';
+import { LinkCloud, Robot, System, Toolkit } from '@icon-park/react';
 import classNames from 'classnames';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -12,9 +11,6 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { pathname } = useLocation();
-
-  // 检测是否在 Electron 桌面环境 / Check if running in Electron desktop environment
-  const isDesktop = isElectronDesktop();
 
   const menus = useMemo(() => {
     const items = [
@@ -34,34 +30,14 @@ const SettingsSider: React.FC<{ collapsed?: boolean; tooltipEnabled?: boolean }>
         path: 'tools',
       },
       {
-        label: t('settings.display'),
-        icon: <Computer />,
-        path: 'display',
-      },
-    ];
-
-    // 桌面端显示 WebUI，WebUI 浏览器模式下显示 Channels / Desktop shows WebUI, WebUI browser mode shows Channels
-    items.push({
-      label: t('settings.webui'),
-      icon: isDesktop ? <Earth /> : <Communication />,
-      path: 'webui',
-    });
-
-    items.push(
-      {
         label: t('settings.system'),
         icon: <System />,
         path: 'system',
       },
-      {
-        label: t('settings.about'),
-        icon: <Info />,
-        path: 'about',
-      }
-    );
+    ];
 
     return items;
-  }, [t, isDesktop]);
+  }, [t]);
   const siderTooltipProps = getSiderTooltipProps(tooltipEnabled);
   return (
     <div className={classNames('flex-1 settings-sider flex flex-col gap-2px', { 'settings-sider--collapsed': collapsed })}>

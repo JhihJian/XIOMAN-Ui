@@ -48,7 +48,7 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
     setLoading(true);
     try {
       const result = await ipcBridge.platform.getAgentList.invoke();
-      if (result.success && result.data) {
+      if (result && result.success && result.data) {
         setAgents(result.data);
       } else {
         message.error(result.msg || t('common.fetchFailed', { defaultValue: 'Failed to fetch data' }));
