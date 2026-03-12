@@ -70,9 +70,11 @@ export function getBridgeEmitter(): typeof bridgeEmitter {
  * */
 bridge.adapter({
   emit(name, data) {
+    console.log('[MainAdapter] emit called:', name, 'windowList.length:', adapterWindowList.length);
     // 1. 发送到所有 Electron BrowserWindow / Send to all Electron BrowserWindows
     for (let i = 0, len = adapterWindowList.length; i < len; i++) {
       const win = adapterWindowList[i];
+      console.log('[MainAdapter] Sending to window:', i, 'isDestroyed:', win.isDestroyed());
       win.webContents.send(ADAPTER_BRIDGE_EVENT_KEY, JSON.stringify({ name, data }));
     }
     // 2. 同时广播到所有 WebSocket 客户端 / Also broadcast to all WebSocket clients
@@ -90,16 +92,22 @@ bridge.adapter({
 
     ipcMain.handle(ADAPTER_BRIDGE_EVENT_KEY, (_event, info) => {
       const { name, data } = JSON.parse(info) as BridgeEventData;
-      return Promise.resolve(emitter.emit(name, data));
+      console.log('[MainAdapter] IPC received:', name);
+      const result = emitter.emit(name, data);
+      console.log('[MainAdapter] emitter.emit result:', result);
+      return Promise.resolve(result);
     });
   },
 });
 
 export const initMainAdapterWithWindow = (win: BrowserWindow) => {
+  console.log('[MainAdapter] Registering window, current list length:', adapterWindowList.length);
   adapterWindowList.push(win);
+  console.log('[MainAdapter] Window registered, new list length:', adapterWindowList.length);
   const off = () => {
     const index = adapterWindowList.indexOf(win);
     if (index > -1) adapterWindowList.splice(index, 1);
+    console.log('[MainAdapter] Window removed, new list length:', adapterWindowList.length);
   };
   win.on('closed', off);
   return off;

@@ -8,13 +8,7 @@ export interface AuthUser {
   username: string;
 }
 
-interface LoginParams {
-  username: string;
-  password: string;
-  remember?: boolean;
-}
-
-type LoginErrorCode = 'invalidCredentials' | 'tooManyAttempts' | 'serverError' | 'networkError' | 'unknown';
+type LoginErrorCode = 'invalidAuthCode' | 'invalidCredentials' | 'tooManyAttempts' | 'serverError' | 'networkError' | 'unknown';
 
 interface LoginResult {
   success: boolean;
@@ -26,7 +20,7 @@ interface AuthContextValue {
   ready: boolean;
   user: AuthUser | null;
   status: AuthStatus;
-  login: (params: LoginParams) => Promise<LoginResult>;
+  loginWithAuthCode: (authCode: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -100,33 +94,32 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     };
   }, [refresh]);
 
-  const login = useCallback(async ({ username, password, remember }: LoginParams): Promise<LoginResult> => {
+  const loginWithAuthCode = useCallback(async (authCode: string): Promise<LoginResult> => {
     try {
       if (isDesktopRuntime) {
         setReady(true);
         return { success: true };
       }
 
-      // P1 安全修复：登录请求需要 CSRF Token / P1 Security fix: Login needs CSRF token
-      const response = await fetch('/login', {
+      const response = await fetch('/api/auth/code-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify(withCsrfToken({ username, password, remember })),
+        body: JSON.stringify(withCsrfToken({ authCode })),
       });
 
       const data = (await response.json()) as {
         success: boolean;
-        message?: string;
+        error?: string;
         user?: AuthUser;
       };
 
       if (!response.ok || !data.success || !data.user) {
         let code: LoginErrorCode = 'unknown';
         if (response.status === 401) {
-          code = 'invalidCredentials';
+          code = 'invalidAuthCode';
         } else if (response.status === 429) {
           code = 'tooManyAttempts';
         } else if (response.status >= 500) {
@@ -135,7 +128,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
         return {
           success: false,
-          message: data?.message ?? 'Login failed',
+          message: data?.error ?? 'Login failed',
           code,
         };
       }
@@ -171,7 +164,6 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     try {
       await fetch('/logout', {
         method: 'POST',
-        // Logout also needs CSRF token / 登出同样需要 CSRF Token
         headers: {
           'Content-Type': 'application/json',
         },
@@ -191,11 +183,11 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       ready,
       user,
       status,
-      login,
+      loginWithAuthCode,
       logout,
       refresh,
     }),
-    [login, logout, ready, refresh, status, user]
+    [loginWithAuthCode, logout, ready, refresh, status, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

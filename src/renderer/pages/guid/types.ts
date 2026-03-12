@@ -33,16 +33,6 @@ export type MentionOption = {
 };
 
 /**
- * Effective agent type info used for UI display and send logic.
- */
-export type EffectiveAgentInfo = {
-  agentType: PresetAgentType;
-  isFallback: boolean;
-  originalType: PresetAgentType;
-  isAvailable: boolean;
-};
-
-/**
  * Re-export commonly used ACP types for convenience.
  */
 export type { AcpBackend, AcpBackendConfig, AcpModelInfo, PresetAgentType };

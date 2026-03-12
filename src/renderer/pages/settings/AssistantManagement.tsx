@@ -45,17 +45,24 @@ const AssistantManagement: React.FC<AssistantManagementProps> = ({ message }) =>
   const [uninstallingId, setUninstallingId] = useState<string | null>(null);
 
   const fetchAgentList = useCallback(async () => {
+    console.log('[AssistantManagement] fetchAgentList start');
     setLoading(true);
     try {
+      console.log('[AssistantManagement] Calling ipcBridge.platform.getAgentList.invoke()');
       const result = await ipcBridge.platform.getAgentList.invoke();
+      console.log('[AssistantManagement] IPC result:', result);
       if (result && result.success && result.data) {
+        console.log('[AssistantManagement] Setting agents:', result.data.length);
         setAgents(result.data);
       } else {
+        console.error('[AssistantManagement] IPC failed:', result);
         message.error(result.msg || t('common.fetchFailed', { defaultValue: 'Failed to fetch data' }));
       }
     } catch (error) {
+      console.error('[AssistantManagement] IPC error:', error);
       message.error(error instanceof Error ? error.message : t('common.fetchFailed', { defaultValue: 'Failed to fetch data' }));
     } finally {
+      console.log('[AssistantManagement] fetchAgentList done, setting loading=false');
       setLoading(false);
     }
   }, [message, t]);

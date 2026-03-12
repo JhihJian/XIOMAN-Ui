@@ -10,11 +10,10 @@
  */
 
 import { ipcBridge } from '@/common';
-import { ConfigStorage } from '@/common/storage';
+import { ProcessConfig, getAssistantsDir } from '../initStorage';
 import type { NodeCredential, RegisterResponse, AuthCheckResponse, PlatformAgentConfig, PlatformNotification, AgentYamlConfig } from '@/common/types/platformTypes';
 import type { AcpBackendConfig } from '@/types/acpTypes';
 import { PLATFORM_CONFIG } from '@/common/config/platformConfig';
-import { getAssistantsDir } from '../initStorage';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { app } from 'electron';
@@ -37,7 +36,6 @@ const mockAgents: PlatformAgentConfig[] = [
     name: '全国平台对接助手',
     description: '负责与全国安全生产信息平台进行数据对接，自动同步企业信息、人员信息和安全生产数据。',
     platformVersion: '1.2.0',
-    avatar: 'platform-docking.png',
     downloadUrl: 'https://example.com/agents/platform-docking-1.2.0.zip',
     installedAt: '2026-03-05T14:30:00Z',
     status: 'installed',
@@ -47,7 +45,6 @@ const mockAgents: PlatformAgentConfig[] = [
     name: '问题隐患整改信息上报助手',
     description: '用于上报问题隐患的整改情况，包括隐患描述、整改措施、整改进度和完成状态等信息。',
     platformVersion: '2.0.0',
-    avatar: 'hazard-reporting.png',
     downloadUrl: 'https://example.com/agents/hazard-reporting-2.0.0.zip',
     installedAt: '2026-02-20T11:00:00Z',
     status: 'update_available',
@@ -57,7 +54,6 @@ const mockAgents: PlatformAgentConfig[] = [
     name: '落查任务结果信息上报助手',
     description: '用于上报落查任务的结果信息，包括任务完成情况、检查结果、发现的问题及处理建议等。',
     platformVersion: '1.0.0',
-    avatar: 'inspection-reporting.png',
     downloadUrl: 'https://example.com/agents/inspection-reporting-1.0.0.zip',
     status: 'not_installed',
   },
@@ -286,45 +282,53 @@ export function initPlatformBridge(): void {
 
   // Get agent list from platform with local installation status
   ipcBridge.platform.getAgentList.provider(async () => {
-    // Get local installed agents
-    const localAgents = (await ConfigStorage.get('acp.customAgents')) || [];
-    const localAgentMap = new Map<string, AcpBackendConfig>();
-    for (const agent of localAgents) {
-      if (agent.id) {
-        localAgentMap.set(agent.id, agent);
+    console.log('[Platform] getAgentList provider called, IS_DEV:', IS_DEV);
+    try {
+      // Get local installed agents
+      const localAgents = (await ProcessConfig.get('acp.customAgents')) || [];
+      console.log('[Platform] Local agents count:', localAgents.length);
+      const localAgentMap = new Map<string, AcpBackendConfig>();
+      for (const agent of localAgents) {
+        if (agent.id) {
+          localAgentMap.set(agent.id, agent);
+        }
       }
-    }
 
-    // Helper to determine installation status
-    const getInstallStatus = (platformAgent: { id: string; platformVersion?: string }): 'installed' | 'update_available' | 'not_installed' => {
-      const local = localAgentMap.get(platformAgent.id);
-      if (!local) return 'not_installed';
-      if (local.platformVersion && platformAgent.platformVersion && local.platformVersion !== platformAgent.platformVersion) {
-        return 'update_available';
+      // Helper to determine installation status
+      const getInstallStatus = (platformAgent: { id: string; platformVersion?: string }): 'installed' | 'update_available' | 'not_installed' => {
+        const local = localAgentMap.get(platformAgent.id);
+        if (!local) return 'not_installed';
+        if (local.platformVersion && platformAgent.platformVersion && local.platformVersion !== platformAgent.platformVersion) {
+          return 'update_available';
+        }
+        return 'installed';
+      };
+
+      // Use mock in dev mode
+      if (IS_DEV) {
+        console.log('[Platform] Using mock data for agent list');
+        const mergedAgents: PlatformAgentConfig[] = mockAgents.map((agent) => ({
+          ...agent,
+          status: getInstallStatus(agent),
+        }));
+        console.log('[Platform] Returning mock agents:', mergedAgents.length);
+        return { success: true, data: mergedAgents };
       }
-      return 'installed';
-    };
 
-    // Use mock in dev mode
-    if (IS_DEV) {
-      console.log('[Platform] Using mock data for agent list');
-      const mergedAgents: PlatformAgentConfig[] = mockAgents.map((agent) => ({
-        ...agent,
-        status: getInstallStatus(agent),
-      }));
-      return { success: true, data: mergedAgents };
+      // Production: fetch from API and merge with local status
+      const result = await fetchApi<PlatformAgentConfig[]>('/api/nodes/agents');
+      if (result.success && result.data) {
+        const mergedAgents: PlatformAgentConfig[] = result.data.map((agent) => ({
+          ...agent,
+          status: getInstallStatus(agent),
+        }));
+        return { success: true, data: mergedAgents };
+      }
+      return result;
+    } catch (error) {
+      console.error('[Platform] getAgentList error:', error);
+      return { success: false, msg: error instanceof Error ? error.message : 'Unknown error' };
     }
-
-    // Production: fetch from API and merge with local status
-    const result = await fetchApi<PlatformAgentConfig[]>('/api/nodes/agents');
-    if (result.success && result.data) {
-      const mergedAgents: PlatformAgentConfig[] = result.data.map((agent) => ({
-        ...agent,
-        status: getInstallStatus(agent),
-      }));
-      return { success: true, data: mergedAgents };
-    }
-    return result;
   });
 
   // Download and install agent package
@@ -340,15 +344,45 @@ export function initPlatformBridge(): void {
           return { success: false, msg: 'Agent not found' };
         }
 
+        // Write mock rule files to assistants directory
+        // 写入 mock 规则文件到 assistants 目录
+        const assistantsDir = getAssistantsDir();
+        await fs.promises.mkdir(assistantsDir, { recursive: true });
+
+        const mockRuleContent = `# ${agentConfig.name}
+
+${agentConfig.description}
+
+## 功能说明
+
+这是一个平台预设助手，用于演示和测试目的。
+
+## 使用场景
+
+- 场景一：数据对接和同步
+- 场景二：信息上报和反馈
+- 场景三：任务执行和结果跟踪
+
+## 注意事项
+
+1. 请确保相关系统已正确配置
+2. 操作前请确认数据准确性
+3. 如遇问题请及时反馈
+`;
+
+        const ruleFileName = `${agentId}.zh-CN.md`;
+        await fs.promises.writeFile(path.join(assistantsDir, ruleFileName), mockRuleContent, 'utf-8');
+        console.log('[Platform] Mock agent rule file written:', ruleFileName);
+
         // Save config to acp.customAgents
-        const existingAgents = (await ConfigStorage.get('acp.customAgents')) || [];
+        const existingAgents = (await ProcessConfig.get('acp.customAgents')) || [];
         const agentToSave: AcpBackendConfig = {
           id: agentConfig.id,
           name: agentConfig.name,
           description: agentConfig.description,
-          avatar: agentConfig.avatar,
           platformVersion: agentConfig.platformVersion,
           isPreset: true,
+          enabled: true,
           installedAt: new Date().toISOString(),
         };
 
@@ -359,7 +393,7 @@ export function initPlatformBridge(): void {
           existingAgents.push(agentToSave);
         }
 
-        await ConfigStorage.set('acp.customAgents', existingAgents);
+        await ProcessConfig.set('acp.customAgents', existingAgents);
         console.log('[Platform] Mock agent installed:', agentId);
         return { success: true };
       }
@@ -390,15 +424,17 @@ export function initPlatformBridge(): void {
       await installAgentPackage(agentId, zipBuffer, assistantsDir);
 
       // 4. Save config to acp.customAgents
-      const existingAgents = (await ConfigStorage.get('acp.customAgents')) || [];
+      const existingAgents = (await ProcessConfig.get('acp.customAgents')) || [];
       const agentToSave: AcpBackendConfig = {
         ...agentConfig,
         isPreset: true,
+        enabled: true,
         installedAt: new Date().toISOString(),
       };
       // Remove runtime-only fields
       delete (agentToSave as PlatformAgentConfig).status;
       delete (agentToSave as PlatformAgentConfig).downloadUrl;
+      delete (agentToSave as PlatformAgentConfig).avatar; // Don't save avatar
 
       const existingIndex = existingAgents.findIndex((a: AcpBackendConfig) => a.id === agentId);
       if (existingIndex >= 0) {
@@ -407,7 +443,7 @@ export function initPlatformBridge(): void {
         existingAgents.push(agentToSave);
       }
 
-      await ConfigStorage.set('acp.customAgents', existingAgents);
+      await ProcessConfig.set('acp.customAgents', existingAgents);
       console.log('[Platform] Agent installed successfully:', agentId);
 
       return { success: true };
@@ -476,9 +512,9 @@ export function initPlatformBridge(): void {
   ipcBridge.platform.uninstallAgent.provider(async ({ agentId }) => {
     try {
       // 1. Remove from acp.customAgents
-      const existingAgents = (await ConfigStorage.get('acp.customAgents')) || [];
+      const existingAgents = (await ProcessConfig.get('acp.customAgents')) || [];
       const filteredAgents = existingAgents.filter((a: AcpBackendConfig) => a.id !== agentId);
-      await ConfigStorage.set('acp.customAgents', filteredAgents);
+      await ProcessConfig.set('acp.customAgents', filteredAgents);
 
       // 2. Delete rule files
       const assistantsDir = getAssistantsDir();

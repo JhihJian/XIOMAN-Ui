@@ -7,7 +7,7 @@
 import { ipcBridge } from '@/common';
 import type { IProvider } from '@/common/storage';
 import { ConfigStorage } from '@/common/storage';
-import type { AcpBackend, AcpBackendConfig, AcpModelInfo, AvailableAgent, EffectiveAgentInfo, PresetAgentType } from '../types';
+import type { AcpBackend, AcpBackendConfig, AcpModelInfo, AvailableAgent } from '../types';
 import { getAgentModes } from '@/renderer/constants/agentModes';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useSWR, { mutate } from 'swr';
@@ -53,16 +53,9 @@ export type GuidAgentSelectionResult = {
   selectedAcpModel: string | null;
   setSelectedAcpModel: React.Dispatch<React.SetStateAction<string | null>>;
   currentAcpCachedModelInfo: AcpModelInfo | null;
-  currentEffectiveAgentInfo: EffectiveAgentInfo;
   getAgentKey: (agent: { backend: AcpBackend; customAgentId?: string }) => string;
   findAgentByKey: (key: string) => AvailableAgent | undefined;
   resolvePresetRulesAndSkills: (agentInfo: { backend: AcpBackend; customAgentId?: string; context?: string } | undefined) => Promise<{ rules?: string; skills?: string }>;
-  resolvePresetContext: (agentInfo: { backend: AcpBackend; customAgentId?: string; context?: string } | undefined) => Promise<string | undefined>;
-  resolvePresetAgentType: (agentInfo: { backend: AcpBackend; customAgentId?: string } | undefined) => PresetAgentType;
-  resolveEnabledSkills: (agentInfo: { backend: AcpBackend; customAgentId?: string } | undefined) => string[] | undefined;
-  isMainAgentAvailable: (agentType: PresetAgentType) => boolean;
-  getAvailableFallbackAgent: () => PresetAgentType | null;
-  getEffectiveAgentType: (agentInfo: { backend: AcpBackend; customAgentId?: string } | undefined) => EffectiveAgentInfo;
   refreshCustomAgents: () => Promise<void>;
   customAgentAvatarMap: Map<string, string | undefined>;
 };
@@ -422,72 +415,6 @@ export const useGuidAgentSelection = ({ modelList, isGoogleAuth, localeKey }: Us
     [localeKey]
   );
 
-  const resolvePresetContext = useCallback(
-    async (agentInfo: { backend: AcpBackend; customAgentId?: string; context?: string } | undefined): Promise<string | undefined> => {
-      const { rules } = await resolvePresetRulesAndSkills(agentInfo);
-      return rules;
-    },
-    [resolvePresetRulesAndSkills]
-  );
-
-  const resolvePresetAgentType = useCallback(
-    (agentInfo: { backend: AcpBackend; customAgentId?: string } | undefined) => {
-      if (!agentInfo) return 'gemini' as PresetAgentType;
-      if (agentInfo.backend !== 'custom') return agentInfo.backend as PresetAgentType;
-      const customAgent = customAgents.find((agent) => agent.id === agentInfo.customAgentId);
-      return customAgent?.presetAgentType || ('gemini' as PresetAgentType);
-    },
-    [customAgents]
-  );
-
-  const resolveEnabledSkills = useCallback(
-    (agentInfo: { backend: AcpBackend; customAgentId?: string } | undefined): string[] | undefined => {
-      if (!agentInfo) return undefined;
-      if (agentInfo.backend !== 'custom') return undefined;
-      const customAgent = customAgents.find((agent) => agent.id === agentInfo.customAgentId);
-      return customAgent?.enabledSkills;
-    },
-    [customAgents]
-  );
-
-  // --- Availability checks ---
-  const isMainAgentAvailable = useCallback(
-    (agentType: PresetAgentType): boolean => {
-      if (agentType === 'gemini') {
-        return isGoogleAuth || (modelList != null && modelList.length > 0);
-      }
-      return availableAgents?.some((agent) => agent.backend === agentType) ?? false;
-    },
-    [modelList, availableAgents, isGoogleAuth]
-  );
-
-  const getAvailableFallbackAgent = useCallback((): PresetAgentType | null => {
-    const fallbackOrder: PresetAgentType[] = ['gemini', 'claude', 'qwen', 'codex', 'codebuddy', 'opencode'];
-    for (const agentType of fallbackOrder) {
-      if (isMainAgentAvailable(agentType)) {
-        return agentType;
-      }
-    }
-    return null;
-  }, [isMainAgentAvailable]);
-
-  const getEffectiveAgentType = useCallback(
-    (agentInfo: { backend: AcpBackend; customAgentId?: string } | undefined): EffectiveAgentInfo => {
-      const originalType = resolvePresetAgentType(agentInfo);
-      const isAvailable = isMainAgentAvailable(originalType);
-      return { agentType: originalType, isFallback: false, originalType, isAvailable };
-    },
-    [resolvePresetAgentType, isMainAgentAvailable]
-  );
-
-  const currentEffectiveAgentInfo = useMemo(() => {
-    if (!isPresetAgent) {
-      const isAvailable = isMainAgentAvailable(selectedAgent as PresetAgentType);
-      return { agentType: selectedAgent as PresetAgentType, isFallback: false, originalType: selectedAgent as PresetAgentType, isAvailable };
-    }
-    return getEffectiveAgentType(selectedAgentInfo);
-  }, [isPresetAgent, selectedAgent, selectedAgentInfo, getEffectiveAgentType, isMainAgentAvailable]);
-
   const currentAcpCachedModelInfo = useMemo(() => {
     const backend = selectedAgentKey.startsWith('custom:') ? 'custom' : selectedAgentKey;
     const cached = acpCachedModels[backend];
@@ -496,14 +423,6 @@ export const useGuidAgentSelection = ({ modelList, isGoogleAuth, localeKey }: Us
     // No fallback models available - models will be fetched from the agent
     return null;
   }, [selectedAgentKey, acpCachedModels]);
-
-  // Auto-switch only for Gemini agent
-  useEffect(() => {
-    if (!availableAgents || availableAgents.length === 0) return;
-    if (selectedAgent === 'gemini' && !currentEffectiveAgentInfo.isAvailable) {
-      console.log('[Guid] Gemini is not configured. Will check for alternatives when sending.');
-    }
-  }, [availableAgents, currentEffectiveAgentInfo, selectedAgent]);
 
   const refreshCustomAgents = useCallback(async () => {
     try {
@@ -532,16 +451,9 @@ export const useGuidAgentSelection = ({ modelList, isGoogleAuth, localeKey }: Us
     selectedAcpModel,
     setSelectedAcpModel,
     currentAcpCachedModelInfo,
-    currentEffectiveAgentInfo,
     getAgentKey,
     findAgentByKey,
     resolvePresetRulesAndSkills,
-    resolvePresetContext,
-    resolvePresetAgentType,
-    resolveEnabledSkills,
-    isMainAgentAvailable,
-    getAvailableFallbackAgent,
-    getEffectiveAgentType,
     refreshCustomAgents,
     customAgentAvatarMap,
   };

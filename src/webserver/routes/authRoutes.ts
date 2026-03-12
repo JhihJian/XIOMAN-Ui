@@ -13,6 +13,7 @@ import { TokenUtils } from '@/webserver/auth/middleware/TokenMiddleware';
 import { createAppError } from '../middleware/errorHandler';
 import { authRateLimiter, authenticatedActionLimiter, apiRateLimiter } from '../middleware/security';
 import { verifyQRTokenDirect } from '@/process/bridge/webuiBridge';
+import { PLATFORM_CONFIG } from '@/common/config/platformConfig';
 
 /**
  * QR 登录页面 HTML（静态，不包含用户输入）
@@ -91,66 +92,6 @@ const QR_LOGIN_PAGE_HTML = `<!DOCTYPE html>
  * Register authentication routes
  */
 export function registerAuthRoutes(app: Express): void {
-  /**
-   * 用户登录 - Login endpoint
-   * POST /login
-   */
-  // Login attempts are strictly rate limited to defend against brute force
-  // 登录尝试严格限流，防止暴力破解
-  app.post('/login', authRateLimiter, AuthMiddleware.validateLoginInput, async (req: Request, res: Response) => {
-    try {
-      const { username, password } = req.body;
-
-      // Get user from database
-      const user = UserRepository.findByUsername(username);
-      if (!user) {
-        // Use constant time verification to prevent timing attacks
-        await AuthService.constantTimeVerify('dummy', 'dummy', true);
-        res.status(401).json({
-          success: false,
-          message: 'Invalid username or password',
-        });
-        return;
-      }
-
-      // Verify password with constant time
-      const isValidPassword = await AuthService.constantTimeVerify(password, user.password_hash, true);
-      if (!isValidPassword) {
-        res.status(401).json({
-          success: false,
-          message: 'Invalid username or password',
-        });
-        return;
-      }
-
-      // Generate JWT token
-      const token = AuthService.generateToken(user);
-
-      // Update last login
-      UserRepository.updateLastLogin(user.id);
-
-      // Set secure cookie（远程模式下启用 secure 标志）
-      // Set secure cookie (enable secure flag in remote mode)
-      res.cookie(AUTH_CONFIG.COOKIE.NAME, token, {
-        ...getCookieOptions(),
-        maxAge: AUTH_CONFIG.TOKEN.COOKIE_MAX_AGE,
-      });
-
-      res.json({
-        success: true,
-        message: 'Login successful',
-        user: {
-          id: user.id,
-          username: user.username,
-        },
-        token,
-      });
-    } catch (error) {
-      console.error('Login error:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-  });
-
   /**
    * 用户登出 - Logout endpoint
    * POST /logout
@@ -410,6 +351,146 @@ export function registerAuthRoutes(app: Express): void {
    */
   app.get('/qr-login', (_req: Request, res: Response) => {
     res.send(QR_LOGIN_PAGE_HTML);
+  });
+
+  /**
+   * 授权码登录 - Authorization code login
+   * POST /api/auth/code-login
+   * 使用平台授权码进行登录验证
+   * Use platform authorization code for login verification
+   */
+  app.post('/api/auth/code-login', authRateLimiter, async (req: Request, res: Response) => {
+    try {
+      const { authCode } = req.body;
+
+      if (!authCode || typeof authCode !== 'string') {
+        res.status(400).json({
+          success: false,
+          error: 'Authorization code is required',
+        });
+        return;
+      }
+
+      // 开发模式：使用 mock 数据 / Dev mode: use mock data
+      const IS_DEV = process.env.NODE_ENV === 'development';
+      const MOCK_AUTH_CODE = 'DEMO-2026';
+
+      if (IS_DEV) {
+        console.log('[Auth] Using mock data for code-login');
+        if (authCode !== MOCK_AUTH_CODE) {
+          res.status(401).json({
+            success: false,
+            error: 'Invalid authorization code',
+          });
+          return;
+        }
+
+        // 获取系统用户（授权码登录不需要密码验证）
+        // Get system user (auth code login doesn't require password verification)
+        const adminUser = UserRepository.findByUsername(AUTH_CONFIG.DEFAULT_USER.USERNAME);
+        if (!adminUser) {
+          res.status(500).json({
+            success: false,
+            error: 'System user not initialized',
+          });
+          return;
+        }
+
+        // 生成会话 token / Generate session token
+        const sessionToken = AuthService.generateToken(adminUser);
+
+        // 更新最后登录时间 / Update last login time
+        UserRepository.updateLastLogin(adminUser.id);
+
+        // 设置 session cookie / Set session cookie
+        res.cookie(AUTH_CONFIG.COOKIE.NAME, sessionToken, {
+          ...getCookieOptions(),
+          maxAge: AUTH_CONFIG.TOKEN.COOKIE_MAX_AGE,
+        });
+
+        res.json({
+          success: true,
+          user: { username: adminUser.username },
+          token: sessionToken,
+        });
+        return;
+      }
+
+      // 生产模式：调用平台服务器验证 / Production: call platform server to verify
+      const platformUrl = PLATFORM_CONFIG.serverUrl;
+      if (!platformUrl) {
+        res.status(500).json({
+          success: false,
+          error: 'Platform server not configured',
+        });
+        return;
+      }
+
+      try {
+        const response = await fetch(`${platformUrl}/api/nodes/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ auth_code: authCode }),
+        });
+
+        const result = (await response.json()) as {
+          success: boolean;
+          data?: { node_id?: string; token?: string; token_expires_at?: string };
+          msg?: string;
+        };
+
+        if (!response.ok || !result.success) {
+          res.status(401).json({
+            success: false,
+            error: result.msg || 'Invalid authorization code',
+          });
+          return;
+        }
+
+        // 获取系统用户（授权码登录不需要密码验证）
+        // Get system user (auth code login doesn't require password verification)
+        const adminUser = UserRepository.findByUsername(AUTH_CONFIG.DEFAULT_USER.USERNAME);
+        if (!adminUser) {
+          res.status(500).json({
+            success: false,
+            error: 'System user not initialized',
+          });
+          return;
+        }
+
+        // 生成会话 token / Generate session token
+        const sessionToken = AuthService.generateToken(adminUser);
+
+        // 更新最后登录时间 / Update last login time
+        UserRepository.updateLastLogin(adminUser.id);
+
+        // 设置 session cookie / Set session cookie
+        res.cookie(AUTH_CONFIG.COOKIE.NAME, sessionToken, {
+          ...getCookieOptions(),
+          maxAge: AUTH_CONFIG.TOKEN.COOKIE_MAX_AGE,
+        });
+
+        res.json({
+          success: true,
+          user: { username: adminUser.username, nodeId: result.data?.node_id },
+          token: sessionToken,
+        });
+      } catch (fetchError) {
+        console.error('[Auth] Platform server error:', fetchError);
+        res.status(503).json({
+          success: false,
+          error: 'Unable to connect to platform server',
+        });
+      }
+    } catch (error) {
+      console.error('[Auth] Code login error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+      });
+    }
   });
 }
 

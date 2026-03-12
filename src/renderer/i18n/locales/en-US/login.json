@@ -2,6 +2,9 @@
   "pageTitle": "全国一体化智能终端 - Sign In",
   "brand": "全国一体化智能终端",
   "subtitle": "Welcome back, please sign in to your account",
+  "authCodeSubtitle": "Enter your authorization code to sign in",
+  "authCode": "Authorization Code",
+  "authCodePlaceholder": "Enter your authorization code",
   "username": "Username",
   "usernamePlaceholder": "Enter your username",
   "password": "Password",
@@ -17,6 +20,8 @@
   "footerSecondary": "Modern & Efficient",
   "errors": {
     "empty": "Please enter username and password",
+    "emptyAuthCode": "Please enter authorization code",
+    "invalidAuthCode": "Invalid authorization code",
     "invalidCredentials": "Invalid username or password",
     "tooManyAttempts": "Too many attempts, please try again later",
     "networkError": "Connection failed, please try again",

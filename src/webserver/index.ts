@@ -9,7 +9,6 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { execSync } from 'child_process';
 import { networkInterfaces } from 'os';
-import { AuthService } from '@/webserver/auth/service/AuthService';
 import { UserRepository } from '@/webserver/auth/repository/UserRepository';
 import { AUTH_CONFIG, SERVER_CONFIG } from './config/constants';
 import { initWebAdapter } from './adapter';
@@ -24,9 +23,6 @@ import { generateQRLoginUrlDirect } from '@/process/bridge/webuiBridge';
 
 const DEFAULT_ADMIN_USERNAME = AUTH_CONFIG.DEFAULT_USER.USERNAME;
 
-// 存储初始密码（内存中，用于首次显示）/ Store initial password (in memory, for first-time display)
-let initialAdminPassword: string | null = null;
-
 type QRCodeTerminal = {
   generate: (text: string, options?: { small?: boolean }, cb?: (qr: string) => void) => void;
 };
@@ -39,22 +35,6 @@ function loadQRCodeTerminal(): QRCodeTerminal | null {
   } catch {
     return null;
   }
-}
-
-/**
- * 获取初始管理员密码（仅用于首次显示）
- * Get initial admin password (only for first-time display)
- */
-export function getInitialAdminPassword(): string | null {
-  return initialAdminPassword;
-}
-
-/**
- * 清除初始管理员密码（用户修改密码后调用）
- * Clear initial admin password (called after user changes password)
- */
-export function clearInitialAdminPassword(): void {
-  initialAdminPassword = null;
 }
 
 /**
@@ -130,65 +110,46 @@ function getServerIP(): string | null {
 }
 
 /**
- * 初始化默认管理员账户（如果不存在）
- * Initialize default admin account if no users exist
+ * 初始化系统用户（用于授权码登录）
+ * Initialize system user (for auth code login)
  *
- * @returns 初始凭证（仅首次创建时）/ Initial credentials (only on first creation)
+ * @returns 是否成功初始化 / Whether initialization was successful
  */
-async function initializeDefaultAdmin(): Promise<{ username: string; password: string } | null> {
+function initializeSystemUser(): boolean {
   const username = DEFAULT_ADMIN_USERNAME;
 
-  const systemUser = UserRepository.getSystemUser();
+  // 检查是否已存在管理员用户 / Check if admin user already exists
   const existingAdmin = UserRepository.findByUsername(username);
-
-  // 已存在且密码有效则视为完成初始化
-  // Treat existing admin with valid password as already initialized
-  const hasValidPassword = (user: typeof existingAdmin): boolean => !!user && typeof user.password_hash === 'string' && user.password_hash.trim().length > 0;
-
-  // 如果已经有有效的管理员用户，直接跳过初始化
-  // Skip initialization if a valid admin already exists
-  if (hasValidPassword(existingAdmin)) {
-    return null;
+  if (existingAdmin) {
+    return false; // 已存在，无需初始化 / Already exists, no initialization needed
   }
 
-  const password = AuthService.generateRandomPassword();
+  // 检查是否存在系统占位用户 / Check if system placeholder user exists
+  const systemUser = UserRepository.getSystemUser();
+  if (systemUser) {
+    // 更新占位用户为管理员用户（无密码，通过授权码登录）
+    // Update placeholder to admin user (no password, use auth code login)
+    UserRepository.setSystemUserCredentials(username, '');
+    return true;
+  }
 
+  // 创建新的管理员用户（无密码）
+  // Create new admin user (no password)
   try {
-    const hashedPassword = await AuthService.hashPassword(password);
-
-    if (existingAdmin) {
-      // 情况 1：库中已有 admin 记录但密码缺失 -> 重置密码并输出凭证
-      // Case 1: admin row exists but password is blank -> refresh password and expose credentials
-      UserRepository.updatePassword(existingAdmin.id, hashedPassword);
-      initialAdminPassword = password; // 存储初始密码 / Store initial password
-      return { username, password };
-    }
-
-    if (systemUser) {
-      // 情况 2：仅存在 system_default_user 占位行 -> 更新用户名和密码
-      // Case 2: only placeholder system user exists -> update username/password in place
-      UserRepository.setSystemUserCredentials(username, hashedPassword);
-      initialAdminPassword = password; // 存储初始密码 / Store initial password
-      return { username, password };
-    }
-
-    // 情况 3：初次启动，无任何用户 -> 新建 admin 账户
-    // Case 3: fresh install with no users -> create admin user explicitly
-    UserRepository.createUser(username, hashedPassword);
-    initialAdminPassword = password; // 存储初始密码 / Store initial password
-    return { username, password };
+    UserRepository.createUser(username, undefined, '');
+    return true;
   } catch (error) {
-    console.error('❌ Failed to initialize default admin account:', error);
-    console.error('❌ 初始化默认管理员账户失败:', error);
-    return null;
+    console.error('❌ Failed to initialize system user:', error);
+    console.error('❌ 初始化系统用户失败:', error);
+    return false;
   }
 }
 
 /**
- * 在控制台显示初始凭证信息
- * Display initial credentials in console
+ * 在控制台显示服务器启动信息
+ * Display server startup info in console
  */
-function displayInitialCredentials(credentials: { username: string; password: string }, localUrl: string, allowRemote: boolean, networkUrl?: string): void {
+function displayServerInfo(localUrl: string, allowRemote: boolean, networkUrl?: string): void {
   const port = parseInt(localUrl.split(':').pop() || '3000', 10);
   const { qrUrl } = generateQRLoginUrlDirect(port, allowRemote);
 
@@ -213,12 +174,9 @@ function displayInitialCredentials(credentials: { username: string; password: st
   }
   console.log(`   QR URL: ${qrUrl}`);
 
-  // 显示传统凭证作为备用 / Display traditional credentials as fallback
-  console.log('\n🔐 Or Use Initial Admin Credentials / 或使用初始管理员凭证:');
-  console.log(`   Username / 用户名: ${credentials.username}`);
-  console.log(`   Password / 密码:   ${credentials.password}`);
-  console.log('\n⚠️  Please change the password after first login!');
-  console.log('⚠️  请在首次登录后修改密码！');
+  // 显示授权码登录提示 / Display auth code login hint
+  console.log('\n🔐 Or Use Authorization Code / 或使用授权码登录:');
+  console.log('   Dev Mode Auth Code / 开发模式授权码: DEMO-2026');
 
   console.log('='.repeat(70) + '\n');
 }
@@ -251,8 +209,8 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
   const server = createServer(app);
   const wss = new WebSocketServer({ server });
 
-  // 初始化默认管理员账户 / Initialize default admin account
-  const initialCredentials = await initializeDefaultAdmin();
+  // 初始化系统用户（用于授权码登录）/ Initialize system user (for auth code login)
+  initializeSystemUser();
 
   // 配置中间件 / Configure middleware
   setupBasicMiddleware(app);
@@ -276,17 +234,8 @@ export async function startWebServerWithInstance(port: number, allowRemote = fal
       const serverIP = getServerIP();
       const displayUrl = serverIP ? `http://${serverIP}:${port}` : localUrl;
 
-      // 显示初始凭证（如果是首次启动）/ Display initial credentials (if first startup)
-      if (initialCredentials) {
-        displayInitialCredentials(initialCredentials, localUrl, allowRemote, displayUrl);
-      } else {
-        if (allowRemote && serverIP && serverIP !== 'localhost') {
-          console.log(`\n   🚀 Local access / 本地访问: ${localUrl}`);
-          console.log(`   🚀 Network access / 网络访问: ${displayUrl}\n`);
-        } else {
-          console.log(`\n   🚀 WebUI started / WebUI 已启动: ${localUrl}\n`);
-        }
-      }
+      // 显示服务器启动信息 / Display server startup info
+      displayServerInfo(localUrl, allowRemote, displayUrl);
 
       // 初始化 WebSocket 适配器 / Initialize WebSocket adapter
       initWebAdapter(wss);

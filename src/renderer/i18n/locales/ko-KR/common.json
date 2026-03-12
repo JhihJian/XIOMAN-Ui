@@ -55,5 +55,22 @@
   "more": "더보기",
   "refresh": "새로고침",
   "tray.showWindow": "全国一体化智能终端",
-  "tray.quit": "종료"
+  "tray.quit": "종료",
+  "notification.title": "알림",
+  "notification.panelTitle": "업무 알림",
+  "notification.unread": "읽지 않음",
+  "notification.justNow": "방금",
+  "notification.minutesAgo": "{{count}}분 전",
+  "notification.hoursAgo": "{{count}}시간 전",
+  "notification.daysAgo": "{{count}}일 전",
+  "notification.goToConversation": "대화 시작",
+  "notification.markAllRead": "모두 읽음으로 표시",
+  "notification.markAllReadSuccess": "모든 알림을 읽음으로 표시했습니다",
+  "notification.markAllReadFailed": "알림 표시 실패",
+  "notification.empty": "알림 없음",
+  "notification.expand": "상세 보기",
+  "notification.collapse": "접기",
+  "notification.allRead": "모두 처리 완료!",
+  "notification.markRead": "읽음",
+  "notification.detail": "상세"
 }

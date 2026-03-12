@@ -5,8 +5,8 @@
  */
 
 import type { PlatformNotification } from '@/common/types/platformTypes';
-import { ArrowRight } from '@icon-park/react';
-import React, { useMemo } from 'react';
+import { ArrowRight, Down, Up } from '@icon-park/react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import styles from './index.module.css';
@@ -19,6 +19,7 @@ interface NotificationItemProps {
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRead }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [expanded, setExpanded] = useState(false);
 
   const timeAgo = useMemo(() => {
     const createdAt = new Date(notification.created_at);
@@ -51,13 +52,37 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onRea
     }
   };
 
+  const handleToggleExpand = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpanded((prev) => !prev);
+  }, []);
+
+  const hasLongContent = notification.content.length > 100;
+
   return (
     <div className={`${styles.item} ${!notification.read ? styles.itemUnread : ''}`}>
       <div className={styles.itemHeader}>
         <span className={styles.itemTitle}>{notification.title}</span>
         <span className={styles.itemTime}>{timeAgo}</span>
       </div>
-      <div className={styles.itemContent}>{notification.content}</div>
+      <div className={`${styles.itemContent} ${!expanded && hasLongContent ? styles.itemContentClamped : ''}`} onClick={hasLongContent ? handleToggleExpand : undefined} style={hasLongContent ? { cursor: 'pointer' } : undefined}>
+        {notification.content}
+      </div>
+      {hasLongContent && (
+        <button type='button' className={styles.expandButton} onClick={handleToggleExpand}>
+          {expanded ? (
+            <>
+              <span>{t('notification.collapse', { defaultValue: 'Collapse' })}</span>
+              <Up theme='outline' size={14} fill='currentColor' />
+            </>
+          ) : (
+            <>
+              <span>{t('notification.expand', { defaultValue: 'View details' })}</span>
+              <Down theme='outline' size={14} fill='currentColor' />
+            </>
+          )}
+        </button>
+      )}
       {notification.related_agent_id && (
         <div className={styles.itemFooter}>
           <button type='button' className={styles.itemAction} onClick={() => void handleNavigate()}>

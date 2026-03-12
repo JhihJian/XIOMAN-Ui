@@ -55,5 +55,22 @@
   "more": "Daha Fazla",
   "refresh": "Yenile",
   "tray.showWindow": "全国一体化智能终端",
-  "tray.quit": "Çıkış"
+  "tray.quit": "Çıkış",
+  "notification.title": "Bildirimler",
+  "notification.panelTitle": "İş Bildirimleri",
+  "notification.unread": "okunmamış",
+  "notification.justNow": "Az önce",
+  "notification.minutesAgo": "{{count}} dakika önce",
+  "notification.hoursAgo": "{{count}} saat önce",
+  "notification.daysAgo": "{{count}} gün önce",
+  "notification.goToConversation": "Sohbeti başlat",
+  "notification.markAllRead": "Tümünü okundu işaretle",
+  "notification.markAllReadSuccess": "Tüm bildirimler okundu olarak işaretlendi",
+  "notification.markAllReadFailed": "Bildirimler işaretlenemedi",
+  "notification.empty": "Bildirim yok",
+  "notification.expand": "Detayları gör",
+  "notification.collapse": "Daralt",
+  "notification.allRead": "Hepsi tamamlandı!",
+  "notification.markRead": "Okundu",
+  "notification.detail": "Detaylar"
 }

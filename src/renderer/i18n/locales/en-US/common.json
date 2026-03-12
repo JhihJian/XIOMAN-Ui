@@ -55,5 +55,22 @@
   "more": "More",
   "refresh": "Refresh",
   "tray.showWindow": "全国一体化智能终端",
-  "tray.quit": "Quit"
+  "tray.quit": "Quit",
+  "notification.title": "Notifications",
+  "notification.panelTitle": "Work Notifications",
+  "notification.unread": "unread",
+  "notification.justNow": "Just now",
+  "notification.minutesAgo": "{{count}} minutes ago",
+  "notification.hoursAgo": "{{count}} hours ago",
+  "notification.daysAgo": "{{count}} days ago",
+  "notification.goToConversation": "Start conversation",
+  "notification.markAllRead": "Mark all as read",
+  "notification.markAllReadSuccess": "All notifications marked as read",
+  "notification.markAllReadFailed": "Failed to mark all notifications as read",
+  "notification.empty": "No notifications",
+  "notification.expand": "View details",
+  "notification.collapse": "Collapse",
+  "notification.allRead": "All caught up!",
+  "notification.markRead": "Mark read",
+  "notification.detail": "Details"
 }

@@ -55,5 +55,22 @@
   "more": "更多",
   "refresh": "重新整理",
   "tray.showWindow": "全国一体化智能终端",
-  "tray.quit": "結束"
+  "tray.quit": "結束",
+  "notification.title": "通知",
+  "notification.panelTitle": "工作通知",
+  "notification.unread": "未讀",
+  "notification.justNow": "剛剛",
+  "notification.minutesAgo": "{{count}} 分鐘前",
+  "notification.hoursAgo": "{{count}} 小時前",
+  "notification.daysAgo": "{{count}} 天前",
+  "notification.goToConversation": "開始對話",
+  "notification.markAllRead": "全部標為已讀",
+  "notification.markAllReadSuccess": "已將所有通知標為已讀",
+  "notification.markAllReadFailed": "標記失敗",
+  "notification.empty": "暫無通知",
+  "notification.expand": "查看詳情",
+  "notification.collapse": "收起",
+  "notification.allRead": "已全部處理完畢！",
+  "notification.markRead": "查收",
+  "notification.detail": "詳情"
 }

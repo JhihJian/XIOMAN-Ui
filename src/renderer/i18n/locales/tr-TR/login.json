@@ -2,6 +2,9 @@
   "pageTitle": "全国一体化智能终端 - Giriş Yap",
   "brand": "全国一体化智能终端",
   "subtitle": "Tekrar hoş geldiniz, lütfen hesabınıza giriş yapın",
+  "authCodeSubtitle": "Giriş yapmak için yetki kodunu girin",
+  "authCode": "Yetki Kodu",
+  "authCodePlaceholder": "Yetki kodunuzu girin",
   "username": "Kullanıcı Adı",
   "usernamePlaceholder": "Kullanıcı adınızı girin",
   "password": "Şifre",
@@ -17,6 +20,8 @@
   "footerSecondary": "Modern ve Verimli",
   "errors": {
     "empty": "Lütfen kullanıcı adı ve şifre girin",
+    "emptyAuthCode": "Lütfen yetki kodunu girin",
+    "invalidAuthCode": "Geçersiz yetki kodu",
     "invalidCredentials": "Geçersiz kullanıcı adı veya şifre",
     "tooManyAttempts": "Çok fazla deneme, lütfen daha sonra tekrar deneyin",
     "networkError": "Bağlantı başarısız, lütfen tekrar deneyin",

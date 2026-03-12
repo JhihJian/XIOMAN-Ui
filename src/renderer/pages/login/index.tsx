@@ -12,39 +12,16 @@ type MessageState = {
   text: string;
 };
 
-const REMEMBER_ME_KEY = 'rememberMe';
-const REMEMBERED_USERNAME_KEY = 'rememberedUsername';
-const REMEMBERED_PASSWORD_KEY = 'rememberedPassword';
-
-// Simple obfuscation for stored credentials (not cryptographically secure, but prevents plain text storage)
-const obfuscate = (text: string): string => {
-  const encoded = btoa(encodeURIComponent(text));
-  return encoded.split('').reverse().join('');
-};
-
-const deobfuscate = (text: string): string => {
-  try {
-    const reversed = text.split('').reverse().join('');
-    return decodeURIComponent(atob(reversed));
-  } catch {
-    return '';
-  }
-};
-
 const LoginPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { status, login } = useAuth();
+  const { status, loginWithAuthCode } = useAuth();
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
-  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [authCode, setAuthCode] = useState('');
   const [message, setMessage] = useState<MessageState | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const usernameRef = useRef<HTMLInputElement | null>(null);
-  const passwordRef = useRef<HTMLInputElement | null>(null);
+  const authCodeRef = useRef<HTMLInputElement | null>(null);
   const messageTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
@@ -66,16 +43,8 @@ const LoginPage: React.FC = () => {
   }, [i18n.language]);
 
   useEffect(() => {
-    const isRememberMe = localStorage.getItem(REMEMBER_ME_KEY) === 'true';
-    if (isRememberMe) {
-      const storedUsername = localStorage.getItem(REMEMBERED_USERNAME_KEY);
-      const storedPassword = localStorage.getItem(REMEMBERED_PASSWORD_KEY);
-      if (storedUsername) setUsername(deobfuscate(storedUsername));
-      if (storedPassword) setPassword(deobfuscate(storedPassword));
-      setRememberMe(true);
-    }
     window.setTimeout(() => {
-      usernameRef.current?.focus();
+      authCodeRef.current?.focus();
     }, 0);
 
     return () => {
@@ -132,29 +101,19 @@ const LoginPage: React.FC = () => {
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault();
-      const trimmedUsername = username.trim();
+      const trimmedCode = authCode.trim();
 
-      if (!trimmedUsername || !password) {
-        showMessage({ type: 'error', text: t('login.errors.empty') });
+      if (!trimmedCode) {
+        showMessage({ type: 'error', text: t('login.errors.emptyAuthCode') });
         return;
       }
 
       setLoading(true);
       setMessage(null);
 
-      const result = await login({ username: trimmedUsername, password, remember: rememberMe });
+      const result = await loginWithAuthCode(trimmedCode);
 
       if (result.success) {
-        if (rememberMe) {
-          localStorage.setItem(REMEMBER_ME_KEY, 'true');
-          localStorage.setItem(REMEMBERED_USERNAME_KEY, obfuscate(trimmedUsername));
-          localStorage.setItem(REMEMBERED_PASSWORD_KEY, obfuscate(password));
-        } else {
-          localStorage.removeItem(REMEMBER_ME_KEY);
-          localStorage.removeItem(REMEMBERED_USERNAME_KEY);
-          localStorage.removeItem(REMEMBERED_PASSWORD_KEY);
-        }
-
         const successText = t('login.success');
         showMessage({ type: 'success', text: successText });
 
@@ -164,8 +123,8 @@ const LoginPage: React.FC = () => {
       } else {
         const errorText = (() => {
           switch (result.code) {
-            case 'invalidCredentials':
-              return t('login.errors.invalidCredentials');
+            case 'invalidAuthCode':
+              return t('login.errors.invalidAuthCode');
             case 'tooManyAttempts':
               return t('login.errors.tooManyAttempts');
             case 'networkError':
@@ -183,7 +142,7 @@ const LoginPage: React.FC = () => {
 
       setLoading(false);
     },
-    [login, navigate, password, rememberMe, showMessage, t, username]
+    [loginWithAuthCode, navigate, showMessage, t, authCode]
   );
 
   if (status === 'checking') {
@@ -192,12 +151,6 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className='login-page'>
-      {/* <div className='login-page__background' aria-hidden='true'>
-        <div className='login-page__background-circle login-page__background-circle--lg' />
-        <div className='login-page__background-circle login-page__background-circle--md' />
-        <div className='login-page__background-circle login-page__background-circle--sm' />
-      </div> */}
-
       <div className='login-page__card'>
         <label className='login-page__lang-select-wrapper' htmlFor='lang-select'>
           <select id='lang-select' className='login-page__lang-select' value={i18n.language} onChange={handleLanguageChange}>
@@ -214,54 +167,21 @@ const LoginPage: React.FC = () => {
             <img src={loginLogo} alt={t('login.brand')} />
           </div>
           <h1 className='login-page__title'>{t('login.brand')}</h1>
-          <p className='login-page__subtitle'>{t('login.subtitle')}</p>
+          <p className='login-page__subtitle'>{t('login.authCodeSubtitle')}</p>
         </div>
 
         <form className='login-page__form' onSubmit={handleSubmit}>
           <div className='login-page__form-item'>
-            <label className='login-page__label' htmlFor='username'>
-              {t('login.username')}
-            </label>
-            <div className='login-page__input-wrapper'>
-              <svg className='login-page__input-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' aria-hidden='true'>
-                <path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2' />
-                <circle cx='12' cy='7' r='4' />
-              </svg>
-              <input ref={usernameRef} id='username' name='username' className='login-page__input' placeholder={t('login.usernamePlaceholder')} autoComplete='username' value={username} onChange={(event) => setUsername(event.target.value)} aria-required='true' />
-            </div>
-          </div>
-
-          <div className='login-page__form-item'>
-            <label className='login-page__label' htmlFor='password'>
-              {t('login.password')}
+            <label className='login-page__label' htmlFor='authCode'>
+              {t('login.authCode')}
             </label>
             <div className='login-page__input-wrapper'>
               <svg className='login-page__input-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' aria-hidden='true'>
                 <rect x='3' y='11' width='18' height='11' rx='2' ry='2' />
                 <path d='M7 11V7a5 5 0 0 1 10 0v4' />
               </svg>
-              <input ref={passwordRef} id='password' name='password' type={passwordVisible ? 'text' : 'password'} className='login-page__input' placeholder={t('login.passwordPlaceholder')} autoComplete='current-password' value={password} onChange={(event) => setPassword(event.target.value)} aria-required='true' />
-              <button type='button' className='login-page__toggle-password' onClick={() => setPasswordVisible((prev) => !prev)} aria-label={passwordVisible ? t('login.hidePassword') : t('login.showPassword')}>
-                <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
-                  {passwordVisible ? (
-                    <>
-                      <path d='M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24' />
-                      <line x1='1' y1='1' x2='23' y2='23' />
-                    </>
-                  ) : (
-                    <>
-                      <path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z' />
-                      <circle cx='12' cy='12' r='3' />
-                    </>
-                  )}
-                </svg>
-              </button>
+              <input ref={authCodeRef} id='authCode' name='authCode' type='text' className='login-page__input' placeholder={t('login.authCodePlaceholder')} autoComplete='one-time-code' value={authCode} onChange={(event) => setAuthCode(event.target.value)} aria-required='true' />
             </div>
-          </div>
-
-          <div className='login-page__checkbox'>
-            <input type='checkbox' id='remember-me' checked={rememberMe} onChange={(event) => setRememberMe(event.target.checked)} />
-            <label htmlFor='remember-me'>{t('login.rememberMe')}</label>
           </div>
 
           <button type='submit' className='login-page__submit' disabled={loading}>

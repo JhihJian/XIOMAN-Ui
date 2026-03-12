@@ -8,6 +8,7 @@ import { resolveLocaleKey } from '@/common/utils';
 import { useInputFocusRing } from '@/renderer/hooks/useInputFocusRing';
 import { openExternalUrl } from '@/renderer/utils/platform';
 import { useConversationTabs } from '@/renderer/pages/conversation/context/ConversationTabsContext';
+import NotificationPanel from '@/renderer/components/NotificationPanel';
 import AgentPillBar from './components/AgentPillBar';
 import AssistantSelectionArea from './components/AssistantSelectionArea';
 import { AgentPillBarSkeleton, AssistantsSkeleton } from './components/GuidSkeleton';
@@ -34,6 +35,7 @@ const GuidPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const guidContainerRef = useRef<HTMLDivElement>(null);
+  const autoSendProcessedRef = useRef<string | null>(null);
   const { closeAllTabs, openTab } = useConversationTabs();
   const { activeBorderColor, inactiveBorderColor, activeShadow } = useInputFocusRing();
   const localeKey = resolveLocaleKey(i18n.language);
@@ -90,12 +92,7 @@ const GuidPage: React.FC = () => {
 
     // Agent helpers
     findAgentByKey: agentSelection.findAgentByKey,
-    getEffectiveAgentType: agentSelection.getEffectiveAgentType,
     resolvePresetRulesAndSkills: agentSelection.resolvePresetRulesAndSkills,
-    resolveEnabledSkills: agentSelection.resolveEnabledSkills,
-    isMainAgentAvailable: agentSelection.isMainAgentAvailable,
-    getAvailableFallbackAgent: agentSelection.getAvailableFallbackAgent,
-    currentEffectiveAgentInfo: agentSelection.currentEffectiveAgentInfo,
     isGoogleAuth: modelSelection.isGoogleAuth,
 
     // Mention state reset
@@ -212,7 +209,7 @@ const GuidPage: React.FC = () => {
 
   // Handle agentId from location state (from notifications or Agent list)
   useEffect(() => {
-    const state = location.state as { agentId?: string } | null;
+    const state = location.state as { agentId?: string; message?: string } | null;
     if (state?.agentId) {
       const rawAgentId = state.agentId;
       // Check if the agentId exists in available list
@@ -233,13 +230,34 @@ const GuidPage: React.FC = () => {
       // Clear state to avoid re-triggering
       window.history.replaceState({}, '');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when location.state changes
   }, [location.state, agentSelection]);
+
+  // Handle auto-send message from notifications
+  useEffect(() => {
+    const state = location.state as { agentId?: string; message?: string } | null;
+    if (state?.message && autoSendProcessedRef.current !== state.message) {
+      autoSendProcessedRef.current = state.message;
+      const message = state.message;
+
+      // Set input for visual feedback and send with message override
+      guidInput.setInput(message);
+
+      // Send the message directly with override to avoid state timing issues
+      setTimeout(() => {
+        send.handleSend(message).catch((error) => {
+          console.error('Failed to auto-send message:', error);
+        });
+      }, 150);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional to run only once per unique message
+  }, [location.state]);
 
   // Typewriter placeholder
   const typewriterPlaceholder = useTypewriterPlaceholder(t('conversation.welcome.placeholder'));
 
   // Determine if model selector should be in Gemini mode
-  const isGeminiMode = (agentSelection.selectedAgent === 'gemini' && !agentSelection.isPresetAgent) || (agentSelection.isPresetAgent && agentSelection.currentEffectiveAgentInfo.agentType === 'gemini' && agentSelection.currentEffectiveAgentInfo.isAvailable);
+  const isGeminiMode = agentSelection.selectedAgent === 'gemini' && !agentSelection.isPresetAgent;
 
   // Build the mention dropdown node
   const mentionDropdownNode = <MentionDropdown menuRef={mention.mentionMenuRef} options={mention.filteredMentionOptions} selectedKey={mention.mentionMenuSelectedKey} onSelect={mention.selectMentionAgent} />;
@@ -276,6 +294,7 @@ const GuidPage: React.FC = () => {
     <ConfigProvider getPopupContainer={() => guidContainerRef.current || document.body}>
       <div ref={guidContainerRef} className={styles.guidContainer}>
         <div className={styles.guidLayout}>
+          <NotificationPanel className={styles.notificationPanel} />
           <p className='text-2xl font-semibold mb-6 text-0 text-center'>{t('conversation.welcome.title')}</p>
 
           {agentSelection.availableAgents === undefined ? <AgentPillBarSkeleton /> : agentSelection.availableAgents.length > 0 ? <AgentPillBar availableAgents={agentSelection.availableAgents} selectedAgentKey={agentSelection.selectedAgentKey} getAgentKey={agentSelection.getAgentKey} onSelectAgent={handleSelectAgentFromPillBar} /> : null}
@@ -287,7 +306,7 @@ const GuidPage: React.FC = () => {
             onPaste={guidInput.onPaste}
             onFocus={guidInput.handleTextareaFocus}
             onBlur={guidInput.handleTextareaBlur}
-            placeholder={`${mention.selectedAgentLabel}, ${typewriterPlaceholder || t('conversation.welcome.placeholder')}`}
+            placeholder={typewriterPlaceholder || t('conversation.welcome.placeholder')}
             isInputActive={guidInput.isInputFocused}
             isFileDragging={guidInput.isFileDragging}
             activeBorderColor={activeBorderColor}
@@ -304,7 +323,7 @@ const GuidPage: React.FC = () => {
             actionRow={actionRowNode}
           />
 
-          {agentSelection.availableAgents === undefined ? <AssistantsSkeleton /> : <AssistantSelectionArea isPresetAgent={agentSelection.isPresetAgent} selectedAgentInfo={agentSelection.selectedAgentInfo} customAgents={agentSelection.customAgents} localeKey={localeKey} currentEffectiveAgentInfo={agentSelection.currentEffectiveAgentInfo} onSelectAssistant={handleSelectAssistant} onSetInput={guidInput.setInput} onFocusInput={guidInput.handleTextareaFocus} />}
+          {agentSelection.availableAgents === undefined ? <AssistantsSkeleton /> : <AssistantSelectionArea isPresetAgent={agentSelection.isPresetAgent} selectedAgentInfo={agentSelection.selectedAgentInfo} customAgents={agentSelection.customAgents} localeKey={localeKey} onSelectAssistant={handleSelectAssistant} onSetInput={guidInput.setInput} onFocusInput={guidInput.handleTextareaFocus} />}
         </div>
 
         <QuickActionButtons onOpenLink={openLink} inactiveBorderColor={inactiveBorderColor} activeShadow={activeShadow} />

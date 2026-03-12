@@ -55,5 +55,22 @@
   "more": "その他",
   "refresh": "更新",
   "tray.showWindow": "全国一体化智能终端",
-  "tray.quit": "終了"
+  "tray.quit": "終了",
+  "notification.title": "通知",
+  "notification.panelTitle": "ワーク通知",
+  "notification.unread": "未読",
+  "notification.justNow": "たった今",
+  "notification.minutesAgo": "{{count}}分前",
+  "notification.hoursAgo": "{{count}}時間前",
+  "notification.daysAgo": "{{count}}日前",
+  "notification.goToConversation": "会話を開始",
+  "notification.markAllRead": "すべて既読にする",
+  "notification.markAllReadSuccess": "すべての通知を既読にしました",
+  "notification.markAllReadFailed": "既読にできませんでした",
+  "notification.empty": "通知はありません",
+  "notification.expand": "詳細を見る",
+  "notification.collapse": "折りたたむ",
+  "notification.allRead": "すべて処理完了！",
+  "notification.markRead": "既読",
+  "notification.detail": "詳細"
 }

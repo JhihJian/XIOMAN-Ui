@@ -21,18 +21,23 @@ const win = window as CustomWindow;
  * */
 if (win.electronAPI) {
   // Electron 环境 - 使用 IPC 通信
+  console.log('[BrowserAdapter] Initializing Electron bridge adapter');
   bridge.adapter({
     emit(name, data) {
+      console.log('[BrowserAdapter] emit called:', name);
       return win.electronAPI.emit(name, data);
     },
     on(emitter) {
+      console.log('[BrowserAdapter] on called, registering IPC listener');
       win.electronAPI?.on((event) => {
         try {
           const { value } = event;
+          console.log('[BrowserAdapter] Received IPC message:', value?.substring(0, 100));
           const { name, data } = JSON.parse(value);
+          console.log('[BrowserAdapter] Parsed message name:', name);
           emitter.emit(name, data);
         } catch (e) {
-          console.warn('JSON parsing error:', e);
+          console.warn('[BrowserAdapter] JSON parsing error:', e);
         }
       });
     },

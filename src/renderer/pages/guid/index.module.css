@@ -6,6 +6,11 @@
   margin: 0 auto;
 }
 
+.notificationPanel {
+  width: 100%;
+  flex-shrink: 0;
+}
+
 .guidInputCard {
   width: 100%;
   box-sizing: border-box;

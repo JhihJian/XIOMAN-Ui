@@ -20,25 +20,8 @@
  */
 export type PresetAgentType = 'claude';
 
-/**
- * 使用 ACP 协议的预设 Agent 类型（需要通过 ACP 后端路由）
- * Preset agent types that use ACP protocol (need to be routed through ACP backend)
- *
- * 这些类型会在创建对话时使用对应的 ACP 后端，而不是 Gemini 原生对话
- * These types will use corresponding ACP backend when creating conversation, instead of native Gemini
- */
-export const ACP_ROUTED_PRESET_TYPES: readonly PresetAgentType[] = ['claude'] as const;
-
 export const CLAUDE_ACP_BRIDGE_VERSION = '0.18.0';
 export const CLAUDE_ACP_NPX_PACKAGE = `@zed-industries/claude-agent-acp@${CLAUDE_ACP_BRIDGE_VERSION}`;
-
-/**
- * 检查预设 Agent 类型是否需要通过 ACP 后端路由
- * Check if preset agent type should be routed through ACP backend
- */
-export function isAcpRoutedPresetType(type: PresetAgentType | undefined): boolean {
-  return type !== undefined && ACP_ROUTED_PRESET_TYPES.includes(type);
-}
 
 // 全部后端类型定义 - 包括暂时不支持的 / All backend types - including temporarily unsupported ones
 export type AcpBackendAll = 'claude' | 'custom';

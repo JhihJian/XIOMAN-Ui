@@ -398,20 +398,27 @@ const initStorage = async () => {
   console.log('[AionUi] Starting storage initialization...');
 
   // 1. 先执行数据迁移（在任何目录创建之前）
+  console.log('[AionUi] Step 1: Starting data migration...');
   await migrateLegacyData();
+  console.log('[AionUi] Step 1: Data migration completed');
 
   // 2. 创建必要的目录（迁移后再创建，确保迁移能正常进行）
   // Use ensureDirectory to handle cases where a regular file blocks the path (#841)
+  console.log('[AionUi] Step 2: Creating directories...');
   ensureDirectory(getHomePage());
   ensureDirectory(getDataPath());
+  console.log('[AionUi] Step 2: Directories created');
 
   // 3. 初始化存储系统
+  console.log('[AionUi] Step 3: Initializing storage systems...');
   ConfigStorage.interceptor(configFile);
   ChatStorage.interceptor(chatFile);
   ChatMessageStorage.interceptor(chatMessageFile);
   EnvStorage.interceptor(envFile);
+  console.log('[AionUi] Step 3: Storage systems initialized');
 
   // 4. 初始化 MCP 配置（为所有用户提供默认配置）
+  console.log('[AionUi] Step 4: Initializing MCP config...');
   try {
     const existingMcpConfig = await configFile.get('mcp.config').catch((): undefined => undefined);
 
@@ -434,6 +441,41 @@ const initStorage = async () => {
     if (existingAgents.length === 0) {
       await configFile.set('acp.customAgents', []);
       console.log('[AionUi] No agents configured, platform will provide defaults');
+    } else {
+      // Migration: Fix existing preset agents
+      // 迁移：修复现有预设助手
+      let needsMigration = false;
+      const migratedAgents = existingAgents.map((agent: any) => {
+        if (agent.isPreset) {
+          const updates: Record<string, any> = {};
+
+          // Add enabled: true if missing
+          if (agent.enabled !== true) {
+            updates.enabled = true;
+          }
+
+          // Remove avatar field (platform agents don't use PNG avatars)
+          if (agent.avatar !== undefined) {
+            updates.avatar = undefined;
+          }
+
+          if (Object.keys(updates).length > 0) {
+            needsMigration = true;
+            const migrated = { ...agent, ...updates };
+            // Delete avatar if it was set to undefined
+            if (updates.avatar === undefined) {
+              delete migrated.avatar;
+            }
+            return migrated;
+          }
+        }
+        return agent;
+      });
+
+      if (needsMigration) {
+        await configFile.set('acp.customAgents', migratedAgents);
+        console.log('[AionUi] Migrated preset agents: fixed enabled and removed avatar');
+      }
     }
   } catch (error) {
     console.error('[AionUi] Failed to initialize agents config:', error);

@@ -313,35 +313,6 @@ export function initWebuiBridge(): void {
     }
   });
 
-  // 修改密码（不需要当前密码）/ Change password (no current password required)
-  webui.changePassword.provider(async ({ newPassword }) => {
-    return WebuiService.handleAsync(async () => {
-      await WebuiService.changePassword(newPassword);
-      return { success: true };
-    }, 'Change password');
-  });
-
-  // 重置密码（生成新随机密码）/ Reset password (generate new random password)
-  // 注意：由于 @office-ai/platform bridge 的 provider 模式不支持返回值，
-  // 我们通过 emitter 发送结果，前端监听 resetPasswordResult 事件
-  // Note: Since @office-ai/platform bridge provider doesn't support return values,
-  // we emit the result via emitter, frontend listens to resetPasswordResult event
-  webui.resetPassword.provider(async () => {
-    const result = await WebuiService.handleAsync(async () => {
-      const newPassword = await WebuiService.resetPassword();
-      return { success: true, data: { newPassword } };
-    }, 'Reset password');
-
-    // 通过 emitter 发送结果 / Emit result via emitter
-    if (result.success && result.data) {
-      webui.resetPasswordResult.emit({ success: true, newPassword: result.data.newPassword });
-    } else {
-      webui.resetPasswordResult.emit({ success: false, msg: result.msg });
-    }
-
-    return result;
-  });
-
   // 生成二维码登录 token / Generate QR login token
   webui.generateQRToken.provider(async () => {
     // 检查 webServerInstance 状态
@@ -462,28 +433,12 @@ export function initWebuiBridge(): void {
   // 这些处理器直接返回结果，不依赖 emitter 模式
   // These handlers return results directly, without relying on emitter pattern
 
-  // 直接 IPC: 重置密码 / Direct IPC: Reset password
-  ipcMain.handle('webui-direct-reset-password', async () => {
-    return WebuiService.handleAsync(async () => {
-      const newPassword = await WebuiService.resetPassword();
-      return { success: true, newPassword };
-    }, 'Direct IPC: Reset password');
-  });
-
   // 直接 IPC: 获取状态 / Direct IPC: Get status
   ipcMain.handle('webui-direct-get-status', async () => {
     return WebuiService.handleAsync(async () => {
       const status = await WebuiService.getStatus(webServerInstance);
       return { success: true, data: status };
     }, 'Direct IPC: Get status');
-  });
-
-  // 直接 IPC: 修改密码（不需要当前密码）/ Direct IPC: Change password (no current password required)
-  ipcMain.handle('webui-direct-change-password', async (_event, { newPassword }: { newPassword: string }) => {
-    return WebuiService.handleAsync(async () => {
-      await WebuiService.changePassword(newPassword);
-      return { success: true };
-    }, 'Direct IPC: Change password');
   });
 
   // 直接 IPC: 生成二维码 token / Direct IPC: Generate QR token

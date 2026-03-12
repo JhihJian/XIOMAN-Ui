@@ -2,6 +2,9 @@
   "pageTitle": "全国一体化智能终端 - ログイン",
   "brand": "全国一体化智能终端",
   "subtitle": "おかえりなさい。アカウントにサインインしてください",
+  "authCodeSubtitle": "認証コードを入力してログインしてください",
+  "authCode": "認証コード",
+  "authCodePlaceholder": "認証コードを入力してください",
   "username": "ユーザー名",
   "usernamePlaceholder": "ユーザー名を入力してください",
   "password": "パスワード",
@@ -17,6 +20,8 @@
   "footerSecondary": "効率的でエレガント",
   "errors": {
     "empty": "ユーザー名とパスワードを入力してください",
+    "emptyAuthCode": "認証コードを入力してください",
+    "invalidAuthCode": "認証コードが無効です",
     "invalidCredentials": "ユーザー名またはパスワードが正しくありません",
     "tooManyAttempts": "試行回数が多すぎます。後でもう一度お試しください",
     "networkError": "接続に失敗しました。後でもう一度お試しください",
