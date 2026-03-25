@@ -7,7 +7,7 @@
 import type { PlatformNotification } from '@/common/types/platformTypes';
 import { ipcBridge } from '@/common';
 import { Button, Message, Modal } from '@arco-design/web-react';
-import { Remind, CheckOne, Down, Up, ArrowRight, Info, Check } from '@icon-park/react';
+import { Remind, CheckOne, Down, Up, ArrowRight, Info, Check, User } from '@icon-park/react';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +16,12 @@ import styles from './index.module.css';
 interface NotificationPanelProps {
   className?: string;
 }
+
+// Helper to get avatar letter
+const getAvatarLetter = (title: string) => {
+  const firstChar = title.trim().charAt(0);
+  return firstChar.toUpperCase();
+};
 
 const NotificationPanel: React.FC<NotificationPanelProps> = ({ className }) => {
   const { t } = useTranslation();
@@ -103,13 +109,13 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ className }) => {
       return t('notification.justNow', { defaultValue: 'Just now' });
     }
     if (diffMinutes < 60) {
-      return t('notification.minutesAgo', { count: diffMinutes, defaultValue: `${diffMinutes} minutes ago` });
+      return t('notification.minutesAgo', { count: diffMinutes, defaultValue: `${diffMinutes}m` });
     }
     if (diffHours < 24) {
-      return t('notification.hoursAgo', { count: diffHours, defaultValue: `${diffHours} hours ago` });
+      return t('notification.hoursAgo', { count: diffHours, defaultValue: `${diffHours}h` });
     }
     if (diffDays < 7) {
-      return t('notification.daysAgo', { count: diffDays, defaultValue: `${diffDays} days ago` });
+      return t('notification.daysAgo', { count: diffDays, defaultValue: `${diffDays}d` });
     }
     return date.toLocaleDateString();
   };
@@ -129,6 +135,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ className }) => {
     handleNavigate(notification, true);
   };
 
+  const handleItemClick = (notification: PlatformNotification) => {
+    if (!notification.read) {
+      void handleMarkAsRead(notification.id);
+    }
+  };
+
   // Don't render if no notifications
   if (!loading && notifications.length === 0) {
     return null;
@@ -139,13 +151,9 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ className }) => {
       <div className={`${styles.panel} ${className || ''}`}>
         <div className={styles.header} onClick={() => setExpanded((prev) => !prev)}>
           <div className={styles.headerLeft}>
-            <Remind theme='filled' size={20} fill='currentColor' className={styles.icon} />
+            <Remind theme='filled' size={16} fill='currentColor' className={styles.icon} />
             <span className={styles.title}>{t('notification.panelTitle', { defaultValue: '工作通知' })}</span>
-            {unreadCount > 0 && (
-              <span className={styles.badge}>
-                {unreadCount} {t('notification.unread', { defaultValue: 'unread' })}
-              </span>
-            )}
+            {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
           </div>
           <div className={styles.headerRight}>
             {unreadCount > 0 && (
@@ -159,11 +167,11 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ className }) => {
                 }}
                 className={styles.markAllButton}
               >
-                {t('notification.markAllRead', { defaultValue: 'Mark all as read' })}
+                {t('notification.markAllRead', { defaultValue: '全部已读' })}
               </Button>
             )}
             <button type='button' className={styles.toggleButton}>
-              {expanded ? <Up theme='outline' size={16} fill='currentColor' /> : <Down theme='outline' size={16} fill='currentColor' />}
+              {expanded ? <Up theme='outline' size={14} fill='currentColor' /> : <Down theme='outline' size={14} fill='currentColor' />}
             </button>
           </div>
         </div>
@@ -175,24 +183,47 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ className }) => {
             ) : (
               <div className={styles.list}>
                 {notifications.slice(0, 5).map((notification) => (
-                  <div key={notification.id} className={`${styles.itemRow} ${!notification.read ? styles.itemUnread : ''}`}>
+                  <div
+                    key={notification.id}
+                    className={`${styles.itemRow} ${!notification.read ? styles.itemUnread : ''}`}
+                    onClick={() => handleItemClick(notification)}
+                  >
+                    <div className={styles.avatar}>{getAvatarLetter(notification.title)}</div>
                     <div className={styles.itemMain}>
-                      <span className={styles.itemTitle}>{notification.title}</span>
-                      <span className={styles.itemTime}>{timeAgo(notification.created_at)}</span>
+                      <div className={styles.itemHeader}>
+                        <span className={styles.itemTitle}>{notification.title}</span>
+                        <span className={styles.itemTime}>{timeAgo(notification.created_at)}</span>
+                      </div>
+                      <span className={styles.itemPreview}>{notification.content}</span>
                     </div>
                     <div className={styles.itemActions}>
                       {!notification.read && (
-                        <Button type='text' size='small' className={styles.actionBtn} icon={<Check theme='outline' size={14} fill='currentColor' />} onClick={(e) => handleMarkRead(e, notification.id)}>
-                          {t('notification.markRead', { defaultValue: '查收' })}
-                        </Button>
+                        <button
+                          type='button'
+                          className={styles.actionBtn}
+                          onClick={(e) => handleMarkRead(e, notification.id)}
+                          title={t('notification.markRead', { defaultValue: '标记已读' })}
+                        >
+                          <Check theme='outline' size={16} fill='currentColor' />
+                        </button>
                       )}
-                      <Button type='text' size='small' className={styles.actionBtn} icon={<Info theme='outline' size={14} fill='currentColor' />} onClick={(e) => handleShowDetail(e, notification)}>
-                        {t('notification.detail', { defaultValue: '详情' })}
-                      </Button>
+                      <button
+                        type='button'
+                        className={styles.actionBtn}
+                        onClick={(e) => handleShowDetail(e, notification)}
+                        title={t('notification.detail', { defaultValue: '详情' })}
+                      >
+                        <Info theme='outline' size={16} fill='currentColor' />
+                      </button>
                       {notification.related_agent_id && (
-                        <Button type='text' size='small' className={styles.actionBtn} icon={<ArrowRight theme='outline' size={14} fill='currentColor' />} onClick={(e) => handleStartConversation(e, notification)}>
-                          {t('notification.goToConversation', { defaultValue: '开始对话' })}
-                        </Button>
+                        <button
+                          type='button'
+                          className={styles.actionBtn}
+                          onClick={(e) => handleStartConversation(e, notification)}
+                          title={t('notification.goToConversation', { defaultValue: '开始对话' })}
+                        >
+                          <ArrowRight theme='outline' size={16} fill='currentColor' />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -210,7 +241,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ className }) => {
       </div>
 
       <Modal
-        title={detailNotification?.title}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <User theme='filled' size={18} fill='rgb(var(--primary-6))' />
+            <span>{detailNotification?.title}</span>
+          </div>
+        }
         visible={!!detailNotification}
         onCancel={() => setDetailNotification(null)}
         footer={

@@ -257,13 +257,6 @@ const Titlebar: React.FC<TitlebarProps> = ({ workspaceAvailable }) => {
             {workspaceCollapsed ? <ExpandRight theme='outline' size={iconSize} fill='currentColor' /> : <ExpandLeft theme='outline' size={iconSize} fill='currentColor' />}
           </button>
         )}
-        {showWindowControls && (
-          <button type='button' className='app-titlebar__button' onClick={() => setNotificationVisible(true)} aria-label={t('notification.title', { defaultValue: 'Notifications' })}>
-            <Badge count={unreadCount} dot={unreadCount > 0}>
-              <Remind theme='outline' size={18} fill='currentColor' />
-            </Badge>
-          </button>
-        )}
         {showWindowControls && <WindowControls />}
       </div>
       <NotificationDrawer visible={notificationVisible} onClose={handleNotificationClose} />
